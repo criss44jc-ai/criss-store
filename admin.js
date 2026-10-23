@@ -39,9 +39,12 @@ async function loadAll() {
 }
 function fillClients() {
   const v = $('cs').value;
-  $('cs').innerHTML = '<option value="">Resumen de todos</option>' +
-    clientes.map(c => `<option value="${c.id}">${c.id} · ${esc(c.nombre)}</option>`).join('');
+  const opts = clientes.map(c => `<option value="${c.id}">${c.id} · ${esc(c.nombre)}</option>`).join('');
+  $('cs').innerHTML = '<option value="">Resumen de todos</option>' + opts;
   if (v) $('cs').value = v;
+  const w = $('npc').value;
+  $('npc').innerHTML = '<option value="">Elige el cliente</option>' + opts;
+  if (w) $('npc').value = w;
 }
 
 /* ---------- Imágenes ---------- */
@@ -84,6 +87,9 @@ function renderProdSelect() {
   const v = $('ep').value;
   $('ep').innerHTML = prods.map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock})</option>`).join('');
   if (v) $('ep').value = v;
+  const w = $('npp').value;
+  $('npp').innerHTML = prods.filter(p => p.stock > 0).map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock})</option>`).join('');
+  if (w) $('npp').value = w;
 }
 function renderProds() {
   const L = $('plist');
@@ -101,8 +107,9 @@ function renderProds() {
         <select data-cat="${p.id}" aria-label="Categoría" style="margin-top:6px;padding:6px;font-size:14px;width:auto">
           ${['snack', 'bebida', 'comida', 'otro'].map(k => `<option value="${k}" ${p.categoria === k ? 'selected' : ''}>${k[0].toUpperCase() + k.slice(1)}</option>`).join('')}
         </select>
-        <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <button class="btn sm" data-rep="${p.id}">Comprar a proveedor</button>
+          <label class="btn sm" style="cursor:pointer;margin:0;display:inline-block">Cambiar foto<input type="file" accept="image/*" hidden data-img="${p.id}"></label>
           <button class="btn sm red" data-del="${p.id}">Quitar</button>
         </div>
         <div class="qr" id="qr-${p.id}"></div>
@@ -193,14 +200,17 @@ function renderCob() {
   if (!c) {
     const t = {};
     pend.forEach(f => {
-      const r = t[f.cliente_id] || (t[f.cliente_id] = { debe: 0, vence: f.vence });
+      const r = t[f.cliente_id] || (t[f.cliente_id] = { debe: 0, vence: f.vence, items: {} });
       r.debe += resta(f); if (f.vence < r.vence) r.vence = f.vence;
+      r.items[f.producto_nombre] = (r.items[f.producto_nombre] || 0) + f.cantidad;
     });
     const ks = Object.keys(t).sort((a, b) => t[a].vence.localeCompare(t[b].vence));
     const all = ks.reduce((s, k) => s + t[k].debe, 0);
     box.innerHTML = ks.length ? ks.map(k => {
       const v = t[k].vence, est = v < hoy ? '<b class="low">Vencido</b> · ' : v === hoy ? '<b>Vence hoy</b> · ' : '';
-      return `<div class="line"><div>${esc(nombreDe(k))} <span class="mu">${k}</span><div class="mu">${est}Próximo pago: ${fvence(v)}</div></div><strong>${money(t[k].debe)}</strong></div>`;
+      return `<div class="line"><div>${esc(nombreDe(k))} <span class="mu">${k}</span>
+        <div><b>${Object.entries(t[k].items).map(([n, q]) => q + ' × ' + esc(n)).join(', ')}</b></div>
+        <div class="mu">${est}Próximo pago: ${fvence(v)}</div></div><strong>${money(t[k].debe)}</strong></div>`;
     }).join('') + `<div style="margin-top:10px">Total por cobrar: <span class="total">${money(all)}</span></div>`
       : '<div class="mu" style="margin-top:8px">No hay cuentas pendientes.</div>';
     return;
@@ -255,6 +265,49 @@ $('cd').onclick = async e => {
     say('abmsg', Number(data) > 0.004 ? `Pago registrado. Todavía debe ${money(data)}.` : 'Pago registrado. Cuenta al día.');
   }
 };
+
+/* ---------- Crear pedido para un cliente ---------- */
+function renderModsAdmin() {
+  const h = new Date(), y = h.getFullYear(), m = h.getMonth();
+  const hoy = new Date(y, m, h.getDate()), q15 = new Date(y, m, 15);
+  const q30 = new Date(y, m, Math.min(30, new Date(y, m + 1, 0).getDate()));
+  const dd = d => d.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
+  const o = [
+    ['inmediato', 'Pago inmediato', true],
+    ['quincena15', `Pagar el 15 (${dd(q15)})`, q15 > hoy],
+    ['quincena30', `Pagar el ${q30.getDate() === 30 ? '30' : 'fin de mes'} (${dd(q30)})`, q30 > hoy]
+  ];
+  $('npmod').innerHTML = o.map(([v, t, ok]) => `<option value="${v}" ${ok ? '' : 'disabled'}>${t}</option>`).join('');
+}
+renderModsAdmin();
+$('npadd').onclick = async () => {
+  const c = $('npc').value, p = prods.find(x => x.id == $('npp').value), q = parseInt($('npq').value, 10);
+  if (!c || !p || !(q > 0)) { say('npmsg', 'Elige el cliente, el producto y la cantidad.', true); return; }
+  $('npadd').disabled = true;
+  const { data, error } = await sb.rpc('registrar_compra', { p_cliente: c, p_codigo: p.codigo, p_cantidad: q, p_modalidad: $('npmod').value });
+  $('npadd').disabled = false;
+  if (error) { say('npmsg', error.message, true); return; }
+  $('npq').value = 1;
+  await loadAll();
+  say('npmsg', `Pedido creado: ${q} × ${p.nombre} para ${nombreDe(c)} (${data.factura}).`);
+};
+
+/* ---------- Cambiar la foto de un producto ---------- */
+document.addEventListener('change', async e => {
+  const s = e.target.closest('[data-img]');
+  if (!s || !s.files[0]) return;
+  const p = prods.find(x => x.id == s.dataset.img);
+  s.disabled = true;
+  try {
+    const url = await subir(s.files[0], 'prod', 800, 0.82);
+    const { error } = await sb.from('productos').update({ imagen_url: url }).eq('id', p.id);
+    if (error) throw error;
+    const viejo = p.imagen_url && /\/productos\/([^/?]+)$/.exec(p.imagen_url);
+    if (viejo) sb.storage.from('productos').remove([viejo[1]]);   // borra la foto anterior para ahorrar espacio
+    await loadAll();
+  } catch (err) { alert('No se pudo cambiar la foto: ' + (err.message || err)); }
+  s.disabled = false;
+});
 
 /* ---------- Agregar cliente ---------- */
 $('addc').onclick = async () => {

@@ -99,6 +99,10 @@ input[type=checkbox]{width:auto}
     <div id="alerts" style="margin-top:8px"></div>
   </div>
   <div class="card">
+    <h2>Últimas ventas</h2>
+    <div id="ult"></div>
+  </div>
+  <div class="card">
     <h2>Ganancias y producto estrella</h2>
     <select id="rk"><option value="mes">Este mes</option><option value="todo">Todo el tiempo</option></select>
     <div id="gout" style="margin-top:10px"></div>
@@ -109,6 +113,18 @@ input[type=checkbox]{width:auto}
 
 <!-- ============ COBROS ============ -->
 <section class="pane hide" id="t-cob">
+  <div class="card">
+    <h2>Crear pedido para un cliente</h2>
+    <div class="mu">Para cuando el cliente se olvidó de pedirlo. Descuenta del inventario y queda en su cuenta.</div>
+    <label>Cliente</label><select id="npc"></select>
+    <label>Producto</label><select id="npp"></select>
+    <div class="row">
+      <div><label>Cantidad</label><input id="npq" type="number" min="1" step="1" value="1"></div>
+      <div><label>¿Cuándo paga?</label><select id="npmod"></select></div>
+    </div>
+    <button class="btn go" id="npadd">Crear pedido</button>
+    <div class="msg" id="npmsg"></div>
+  </div>
   <div class="card">
     <h2>Cuentas por cobrar</h2>
     <label>Cliente</label><select id="cs"></select>

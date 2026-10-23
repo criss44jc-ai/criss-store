@@ -80,7 +80,15 @@ function desde() {
   const n = new Date();
   return new Date(n.getFullYear(), n.getMonth(), 1).toISOString();
 }
+async function loadUltimas() {
+  const { data } = await sb.from('compras').select('*').order('id', { ascending: false }).limit(15);
+  $('ult').innerHTML = data && data.length ? data.map(f => `
+    <div class="line"><div><strong>${f.cantidad} × ${esc(f.producto_nombre)}</strong>
+      <div class="mu">${esc(nombreDe(f.cliente_id))} · ${fdate(f.fecha)} · ${f.pagada ? '<span class="paid">COBRADA</span>' : modTxt(f)}</div></div>
+      <strong>${money(f.monto)}</strong></div>`).join('') : '<div class="mu">Aún no hay ventas.</div>';
+}
 async function loadReports() {
+  loadUltimas();
   const d = desde();
   const [rk, gp, rm] = await Promise.all([
     sb.rpc('ranking', { p_desde: d }),
