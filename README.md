@@ -8,7 +8,7 @@ Control de compras, cobros e inventario en línea. Sitio estático (sin compilar
 - `admin.html`, `admin.js`, `admin2.js`: panel del administrador (se abre en `/admin.html`).
 - `mascota.png`: imagen de la mascota (portada, ícono y asistente).
 - `config.js`: URL y llave pública de Supabase (no lo reemplaces si ya tiene tus datos).
-- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
+- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
 
 ## Qué hace
 

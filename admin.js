@@ -33,7 +33,7 @@ async function loadAll() {
     sb.from('compras').select('*').eq('pagada', false).order('vence').order('id')
   ]);
   clientes = cl.data || []; prods = p.data || []; pend = c.data || [];
-  fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas();
+  fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas(); loadComps();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
 }
@@ -220,7 +220,8 @@ function renderCob() {
     (fs.length ? fs.map(f => `
       <div class="line"><div><strong>${esc(f.factura)}</strong> · ${f.cantidad} × ${esc(f.producto_nombre)}
         <div class="mu">${f.vence < hoy ? '<b class="low">Vencida</b> · ' : ''}${modTxt(f)}${Number(f.pagado) > 0 ? ' · abonado ' + money(f.pagado) : ''}</div></div>
-        <strong>${money(resta(f))}</strong></div>`).join('') +
+        <div style="text-align:right"><strong>${money(resta(f))}</strong><br>
+          <button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') +
       `<div style="margin-top:10px">Debe: <span class="total">${money(debe)}</span></div>
        <h2 style="margin-top:16px;font-size:16px">Registrar pago</h2>
        <div class="row">
@@ -242,7 +243,8 @@ async function loadPagos(c) {
   const h = $('abh');
   if (!h) return;
   h.innerHTML = data && data.length ? '<div class="mu" style="margin-top:14px">Pagos recibidos</div>' +
-    data.map(p => `<div class="line"><span>${fdate(p.fecha)} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</span><strong>${money(p.monto)}</strong></div>`).join('') : '';
+    data.map(p => `<div class="line"><span>${fdate(p.fecha)} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</span>
+      <span><strong>${money(p.monto)}</strong> <button class="btn sm red" data-anp="${p.id}" data-desc="el pago de ${money(p.monto)} del ${fdate(p.fecha)}">Anular</button></span></div>`).join('') : '';
 }
 $('cs').onchange = renderCob;
 $('cd').onclick = async e => {
@@ -263,6 +265,64 @@ $('cd').onclick = async e => {
     if (error) { $('abok').disabled = false; say('abmsg', error.message, true); return; }
     await loadAll();
     say('abmsg', Number(data) > 0.004 ? `Pago registrado. Todavía debe ${money(data)}.` : 'Pago registrado. Cuenta al día.');
+  }
+};
+
+/* ---------- Anular pedidos y pagos ---------- */
+document.addEventListener('click', async e => {
+  const a = e.target.closest('[data-anc]'), b = e.target.closest('[data-anp]');
+  if (a) {
+    if (!confirm(`¿Anular ${a.dataset.desc}?\nLas unidades vuelven al inventario.`)) return;
+    const { error } = await sb.rpc('anular_compra', { p_compra: Number(a.dataset.anc) });
+    if (error) { alert(error.message); return; }
+    loadAll();
+  }
+  if (b) {
+    if (!confirm(`¿Anular ${b.dataset.desc}?\nLo que debe el cliente vuelve a subir.`)) return;
+    const { error } = await sb.rpc('anular_pago', { p_pago: Number(b.dataset.anp) });
+    if (error) { alert(error.message); return; }
+    loadAll();
+  }
+});
+
+/* ---------- Comprobantes de pago de los clientes ---------- */
+let comps = [];
+async function loadComps() {
+  const { data, error } = await sb.from('comprobantes').select('*').eq('estado', 'pendiente').order('id');
+  comps = data || [];
+  document.querySelector('#nav [data-t=cob]').textContent = comps.length ? `Cobros (${comps.length})` : 'Cobros';
+  $('comp').innerHTML = error ? '<div class="mu">Falta ejecutar supabase_v5.sql en Supabase.</div>'
+    : comps.length ? comps.map(c => `
+      <div class="line"><div><strong>${esc(nombreDe(c.cliente_id))}</strong> <span class="mu">${fdate(c.fecha)}</span>
+        <div class="mu">${Number(c.monto) > 0 ? 'Debía pagar hoy: ' + money(c.monto) : ''}${c.nota ? ' · ' + esc(c.nota) : ''}</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn sm" data-vc="${esc(c.archivo_path)}">Ver captura</button>
+          <button class="btn sm" data-rc="${c.id}">Registrar pago</button>
+          <button class="btn sm red" data-dc="${c.id}">Descartar</button>
+        </div></div>`).join('')
+    : '<div class="mu">No hay comprobantes pendientes.</div>';
+}
+$('comp').onclick = async e => {
+  const v = e.target.closest('[data-vc]'), r = e.target.closest('[data-rc]'), d = e.target.closest('[data-dc]');
+  if (v) {
+    const { data, error } = await sb.storage.from('comprobantes').createSignedUrl(v.dataset.vc, 600);
+    if (error) { alert('No se pudo abrir la captura.'); return; }
+    window.open(data.signedUrl, '_blank') || (location.href = data.signedUrl);
+  }
+  if (r) {
+    const c = comps.find(x => x.id == r.dataset.rc);
+    const txt = prompt(`Monto que recibiste de ${nombreDe(c.cliente_id)} ($):`, Number(c.monto).toFixed(2));
+    const m = parseFloat(txt);
+    if (!(m > 0)) return;
+    const { error } = await sb.rpc('registrar_pago', { p_cliente: c.cliente_id, p_monto: m, p_metodo: 'Yappy/transferencia', p_nota: 'Comprobante #' + c.id });
+    if (error) { alert(error.message); return; }
+    await sb.from('comprobantes').update({ estado: 'verificado' }).eq('id', c.id);
+    loadAll();
+  }
+  if (d) {
+    if (!confirm('¿Descartar este comprobante? No se registra ningún pago.')) return;
+    await sb.from('comprobantes').update({ estado: 'rechazado' }).eq('id', d.dataset.dc);
+    loadAll();
   }
 };
 

@@ -55,6 +55,10 @@ select{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;back
 .opt input{width:auto;margin:0}
 .opt.off{opacity:.45;cursor:not-allowed}
 video{width:100%;border-radius:10px;margin-top:10px;background:#000}
+input[type=text],input[type=file]{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;background:#fff;color:var(--ink);font:16px var(--tx)}
+.total{font:800 26px var(--hd);color:var(--ok)}
+#pyqr{display:block;width:100%;max-width:260px;margin:10px auto;border-radius:12px;border:1px solid var(--ln)}
+#pytx{white-space:pre-line;background:#f4f6f9;border-radius:10px;padding:10px 12px;margin:8px 0}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover;flex:none}
 .slogan{font-weight:700;font-size:14px;margin-top:4px}
@@ -101,8 +105,25 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
   <div class="card" style="margin-top:14px">
     <h2>Mi cuenta pendiente</h2>
     <div id="acc" class="mu">Elige tu nombre para ver tu cuenta.</div>
+    <button class="btn go hide" id="paybtn" style="width:100%">Pagar ahora (Yappy o cuenta)</button>
   </div>
 </main>
+
+<div id="paysheet" class="sheet hide"><div>
+  <h2>Paga ahora 💸</h2>
+  <div class="mu">Hola <b id="pynom"></b>, tu pedido ya quedó registrado.</div>
+  <div style="margin:10px 0">Total a pagar hoy: <span class="total" id="pymonto"></span></div>
+  <div class="mu">Con Yappy: escanea este código o guárdalo (mantén presionada la imagen) y súbelo desde la app.</div>
+  <img id="pyqr" class="hide" alt="Código QR para pagar">
+  <div id="pytx" class="hide"></div>
+  <button class="btn sm" id="pycp" style="width:100%;padding:10px">Copiar datos de la cuenta</button>
+  <h2 style="font-size:16px;margin-top:16px">¿Ya pagaste? Sube tu comprobante</h2>
+  <input type="file" id="pyf" accept="image/*">
+  <input type="text" id="pynota" placeholder="Nota (opcional)" style="margin-top:8px" maxlength="200">
+  <button class="btn go" id="pyup" style="width:100%">Enviar comprobante</button>
+  <div class="msg" id="pymsg"></div>
+  <button class="btn sm" id="pyx" style="width:100%;margin-top:8px;padding:11px">Cerrar</button>
+</div></div>
 
 <div id="mascota" aria-live="polite">
   <button id="mav" aria-label="Asistente de CRISS’ STORE: toca para un consejo"><img src="mascota.png" alt=""></button>
@@ -149,10 +170,11 @@ const nombreDe = id => (clientes.find(c => c.id === id) || {}).nombre || id;
 
 async function loadAccount() {
   const c = $('cl').value, box = $('acc');
-  if (!c) { box.className = 'mu'; box.textContent = 'Elige tu nombre para ver tu cuenta.'; return; }
+  if (!c) { box.className = 'mu'; box.textContent = 'Elige tu nombre para ver tu cuenta.'; $('paybtn').classList.add('hide'); return; }
   const { data } = await sb.rpc('mi_cuenta', { p_cliente: c });
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   box.className = '';
+  $('paybtn').classList.toggle('hide', !(data && data.length));
   box.innerHTML = (data && data.length) ? data.map(r => {
     const v = new Date(r.vence + 'T00:00:00'), late = v < hoy;
     const txt = r.modalidad === 'inmediato' ? 'Pago inmediato' : 'Pagar el ' + ddmm(v);
@@ -233,8 +255,63 @@ $('sok').onclick = async () => {
   else {
     const cuando = mod === 'inmediato' ? 'pago inmediato' : 'pagas el ' + ddmm(new Date(data.vence + 'T00:00:00'));
     say('bm', `Listo ${nombreDe($('cl').value)}: ${n} × ${nombre} quedó en tu cuenta (${cuando}).`);
+    if (mod === 'inmediato') abrirPago();
   }
   loadAccount(); loadCatalog().then(() => { if (!error) tipCompra(prod); });
+};
+
+/* ---------- Pago (Yappy / cuenta) y comprobante ---------- */
+let datosPago = null;
+async function reducir(file, max = 1400, q = 0.85) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+  const g = cv.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+  g.drawImage(bmp, 0, 0, cv.width, cv.height);
+  return new Promise(res => cv.toBlob(res, 'image/jpeg', q));
+}
+async function abrirPago() {
+  const c = $('cl').value;
+  if (!c) { say('bm', 'Primero elige tu nombre.', true); return; }
+  const { data } = await sb.rpc('datos_pago', { p_cliente: c });
+  const d = data && data[0];
+  if (!d || !(Number(d.a_pagar) > 0)) { say('bm', 'No tienes pagos para hoy. ¡Estás al día! 🎉'); return; }
+  if (!d.texto && !d.imagen) { say('bm', 'Todavía no hay datos de pago cargados. Pregunta en la tienda cómo pagar.', true); return; }
+  datosPago = d;
+  $('pynom').textContent = nombreDe(c);
+  $('pymonto').textContent = '$' + Number(d.a_pagar).toFixed(2);
+  $('pyqr').classList.toggle('hide', !d.imagen);
+  if (d.imagen) $('pyqr').src = d.imagen;
+  $('pytx').classList.toggle('hide', !d.texto);
+  $('pytx').textContent = d.texto || '';
+  $('pycp').classList.toggle('hide', !d.texto);
+  $('pyf').value = ''; $('pynota').value = ''; say('pymsg', '');
+  $('paysheet').classList.remove('hide');
+}
+$('paybtn').onclick = abrirPago;
+$('pyx').onclick = () => $('paysheet').classList.add('hide');
+$('pycp').onclick = async () => {
+  try { await navigator.clipboard.writeText(datosPago.texto); $('pycp').textContent = 'Copiado ✓'; }
+  catch (e) { $('pycp').textContent = 'No se pudo copiar'; }
+  setTimeout(() => $('pycp').textContent = 'Copiar datos de la cuenta', 1800);
+};
+$('pyup').onclick = async () => {
+  const f = $('pyf').files[0], c = $('cl').value;
+  if (!f) { say('pymsg', 'Elige la captura de tu pago.', true); return; }
+  $('pyup').disabled = true; say('pymsg', 'Enviando…');
+  try {
+    const blob = await reducir(f);
+    const path = `${c}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const up = await sb.storage.from('comprobantes').upload(path, blob, { contentType: 'image/jpeg' });
+    if (up.error) throw up.error;
+    const { error } = await sb.rpc('reportar_pago', { p_cliente: c, p_path: path, p_nota: $('pynota').value.trim() || null });
+    if (error) throw error;
+    $('pyf').value = ''; $('pynota').value = '';
+    say('pymsg', '¡Listo! Recibimos tu comprobante. Lo revisaremos y tu cuenta se actualizará.');
+  } catch (e) { say('pymsg', 'No se pudo enviar: ' + (e.message || e), true); }
+  $('pyup').disabled = false;
 };
 
 /* ---------- Escáner QR ---------- */

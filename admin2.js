@@ -85,7 +85,8 @@ async function loadUltimas() {
   $('ult').innerHTML = data && data.length ? data.map(f => `
     <div class="line"><div><strong>${f.cantidad} × ${esc(f.producto_nombre)}</strong>
       <div class="mu">${esc(nombreDe(f.cliente_id))} · ${fdate(f.fecha)} · ${f.pagada ? '<span class="paid">COBRADA</span>' : modTxt(f)}</div></div>
-      <strong>${money(f.monto)}</strong></div>`).join('') : '<div class="mu">Aún no hay ventas.</div>';
+      <div style="text-align:right"><strong>${money(f.monto)}</strong><br>
+        <button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') : '<div class="mu">Aún no hay ventas.</div>';
 }
 async function loadReports() {
   loadUltimas();
