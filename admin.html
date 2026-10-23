@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>CRISS’ STORE · Administrador</title>
+<link rel="icon" type="image/png" href="mascota.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12263a;--ban:#ffd23f;--bg:#f4f6f9;--card:#fff;--ln:#dde3ea;--mu:#5d6b7a;--ok:#0b7a75;--bad:#d64045;
+--hd:"Bricolage Grotesque","Arial Black",system-ui,sans-serif;--tx:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--tx)}
+header{background:var(--ban);padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 12px}
+.bar{max-width:900px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+h1{margin:0;font:800 clamp(26px,7vw,40px)/1 var(--hd);letter-spacing:-.5px}
+.top a{color:var(--ink);font-size:14px;font-weight:700;text-decoration:underline}
+nav{display:flex;gap:6px;margin-top:12px}
+nav button{flex:1;padding:9px 4px;border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:10px;font:700 14px var(--tx);cursor:pointer}
+nav button.on{background:var(--ink);color:var(--ban)}
+main{max-width:900px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 24px)}
+h2{font:700 19px var(--hd);margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:14px}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;background:#fff;color:var(--ink);font:16px var(--tx)}
+input[type=checkbox]{width:auto}
+:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{margin-top:12px;padding:12px 16px;border:0;border-radius:10px;background:var(--ink);color:#fff;font:700 16px var(--tx);cursor:pointer}
+.btn.go{background:var(--ok)}
+.btn.sm{margin:0;padding:6px 10px;font-size:14px;background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn.sm.red{color:var(--bad);border-color:var(--bad)}
+.btn:disabled{opacity:.6}
+.mu{color:var(--mu);font-size:14px}
+.msg{min-height:22px;margin-top:8px;color:var(--ok);font-weight:500}
+.msg.err{color:var(--bad)}
+.hide{display:none!important}
+.line{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--ln)}
+.line:last-child{border:0}
+.low{color:var(--bad);font-weight:700}
+.total{font:800 22px var(--hd)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font:800 22px var(--hd)}
+.kpi span{font-size:13px;color:var(--mu)}
+.alert{background:#fff4f4;border:1px solid var(--bad);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.alert strong{color:var(--bad)}
+.tip{background:#fff9db;border:1px solid #f0d56a;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:15px}
+.pcard{display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:start}
+.pcard img,.ph{width:90px;height:90px;border-radius:10px;object-fit:cover;background:#e9edf2;display:grid;place-items:center;font-size:30px}
+.qr{background:#fff;padding:6px;display:inline-block;border-radius:8px;margin-top:8px;border:1px solid var(--ln)}
+.rk{margin:4px 0 12px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.acts .btn{margin:0;padding:11px 8px;font-size:15px}
+.stl{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--ln)}
+.paid{color:var(--ok);font-size:12px;font-weight:700}
+.sheet{position:fixed;inset:0;background:rgba(18,38,58,.55);display:flex;align-items:flex-end;justify-content:center;z-index:5}
+.sheet>div{background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom,0px) + 18px)}
+.stbox{max-height:92vh;overflow:auto}
+.mtab{width:100%;border-collapse:collapse;font-size:14px}
+.mtab th,.mtab td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--ln)}
+.mtab th:first-child,.mtab td:first-child{text-align:left}
+.scroll{overflow-x:auto}
+@media print{body>*:not(#stmt){display:none!important}#stmt{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none}.noprint{display:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="top"><h1>CRISS’ STORE · Admin</h1><a href="index.html">Ver tienda</a></div>
+  <nav id="nav" class="hide">
+    <button data-t="res" class="on">Resumen</button>
+    <button data-t="cob">Cobros</button>
+    <button data-t="inv">Inventario</button>
+    <button data-t="mas">Más</button>
+  </nav>
+</div></header>
+
+<main>
+<div id="login" class="card">
+  <h2>Entrar como administrador</h2>
+  <label>Correo</label><input id="em" type="email" autocomplete="username">
+  <label>Contraseña</label><input id="pw" type="password" autocomplete="current-password">
+  <button class="btn" id="lg">Entrar</button>
+  <div class="msg err" id="lm"></div>
+</div>
+
+<div id="panel" class="hide">
+
+<!-- ============ RESUMEN ============ -->
+<section class="pane" id="t-res">
+  <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <div class="line" style="border:0;padding:0"><h2 style="margin:0">Por agotarse</h2><button class="btn sm" id="out">Salir</button></div>
+    <div id="alerts" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <h2>Ganancias y producto estrella</h2>
+    <select id="rk"><option value="mes">Este mes</option><option value="todo">Todo el tiempo</option></select>
+    <div id="gout" style="margin-top:10px"></div>
+  </div>
+  <div class="card"><h2>Ranking de clientes</h2><div id="rkout"></div></div>
+  <div class="card"><h2>Resumen mensual</h2><div id="mout" class="scroll"></div></div>
+</section>
+
+<!-- ============ COBROS ============ -->
+<section class="pane hide" id="t-cob">
+  <div class="card">
+    <h2>Cuentas por cobrar</h2>
+    <label>Cliente</label><select id="cs"></select>
+    <div id="cd"></div>
+  </div>
+</section>
+
+<!-- ============ INVENTARIO ============ -->
+<section class="pane hide" id="t-inv">
+  <div class="card">
+    <h2>Compra a proveedor (factura)</h2>
+    <div class="mu">Sube existencia, guarda la factura y calcula el costo para medir tu ganancia.</div>
+    <label>Producto</label><select id="ep"></select>
+    <div class="row">
+      <div><label>Unidades que ingresan</label><input id="ec" type="number" min="1" step="1"></div>
+      <div><label>Total pagado en la factura ($)</label><input id="et" type="number" min="0" step="0.01"></div>
+    </div>
+    <label>Proveedor (opcional)</label><input id="ev">
+    <label>Nota (opcional)</label><input id="en">
+    <label>Foto o PDF de la factura (opcional)</label><input id="ef" type="file" accept="image/*,application/pdf">
+    <button class="btn go" id="eadd">Registrar compra</button>
+    <div class="msg" id="emsg"></div>
+    <div id="elist"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cargar producto nuevo</h2>
+    <label>Nombre</label><input id="pn" placeholder="Ej: Soda de naranja">
+    <div class="row">
+      <div><label>Marca</label><input id="pm"></div>
+      <div><label>Especificación</label><input id="pe" placeholder="Ej: 355 ml"></div>
+    </div>
+    <div class="row">
+      <div><label>Precio de venta ($)</label><input id="pp" type="number" min="0" step="0.01"></div>
+      <div><label>Costo por unidad ($)</label><input id="pc" type="number" min="0" step="0.0001" placeholder="Lo que te cuesta"></div>
+    </div>
+    <div class="row">
+      <div><label>Existencia inicial</label><input id="ps" type="number" min="0" step="1"></div>
+      <div><label>Avisar cuando queden</label><input id="pu" type="number" min="0" value="2"></div>
+    </div>
+    <label>Categoría (el asistente la usa para sugerir combinaciones)</label>
+    <select id="pk"><option value="snack">Snack</option><option value="bebida">Bebida</option><option value="comida">Comida</option><option value="otro">Otro</option></select>
+    <label>Foto del producto</label><input id="pf" type="file" accept="image/*">
+    <button class="btn go" id="addp">Guardar producto</button>
+    <div class="msg" id="pmsg"></div>
+  </div>
+
+  <h2>Inventario</h2>
+  <div id="plist"></div>
+</section>
+
+<!-- ============ MÁS ============ -->
+<section class="pane hide" id="t-mas">
+  <div class="card">
+    <h2>Agregar cliente</h2>
+    <label>Nombre</label><input id="cn" placeholder="Nombre del cliente">
+    <button class="btn go" id="addc">Agregar y asignar número</button>
+    <div class="msg" id="cmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Promociones y productos nuevos</h2>
+    <label>Título</label><input id="tt" placeholder="Ej: ¡Llegó el platanito picante!">
+    <label>Texto (opcional)</label><input id="tx2" placeholder="Ej: Solo esta semana">
+    <label>Producto relacionado (opcional)</label><select id="tp"></select>
+    <label>Imagen de la propaganda</label><input id="tf" type="file" accept="image/*">
+    <button class="btn go" id="tadd">Publicar promoción</button>
+    <div class="msg" id="tmsg"></div>
+    <div id="tlist"></div>
+  </div>
+
+  <div class="card">
+    <h2>Datos de pago para el estado de cuenta</h2>
+    <label>Texto (banco, cuenta, Yappy, etc.)</label>
+    <textarea id="ptx" rows="3" placeholder="Ej: Banco General · Cuenta de ahorros 04-00-00-000000"></textarea>
+    <label>Imagen de QR o de la cuenta (opcional)</label><input id="pim" type="file" accept="image/*">
+    <img id="ppv" class="hide" alt="" style="max-width:170px;margin-top:8px;border-radius:8px;border:1px solid var(--ln)">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn go" id="psv">Guardar datos de pago</button>
+      <button class="btn sm" id="prm" style="margin-top:12px">Quitar imagen</button>
+    </div>
+    <div class="msg" id="pgmsg"></div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<div id="stmt" class="sheet hide"><div class="stbox">
+  <div id="stbody"></div>
+  <label class="noprint" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="stall"> Incluir compras ya cobradas</label>
+  <div class="acts noprint">
+    <button class="btn go" id="stwa">Enviar por WhatsApp</button>
+    <button class="btn" id="stpr">Guardar PDF / imprimir</button>
+    <button class="btn" id="stjp">Descargar JPG</button>
+    <button class="btn sm" id="stcp" style="padding:11px 8px">Copiar texto</button>
+    <button class="btn sm" id="stx" style="padding:11px 8px;grid-column:1/-1">Cerrar</button>
+  </div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="config.js"></script>
+<script src="admin.js"></script>
+<script src="admin2.js"></script>
+</body>
+</html>
