@@ -177,7 +177,8 @@ async function loadAccount() {
   $('paybtn').classList.toggle('hide', !(data && data.length));
   box.innerHTML = (data && data.length) ? data.map(r => {
     const v = new Date(r.vence + 'T00:00:00'), late = v < hoy;
-    const txt = r.modalidad === 'inmediato' ? 'Pago inmediato' : 'Pagar el ' + ddmm(v);
+    const txt = r.modalidad === 'inmediato' ? 'Pago inmediato'
+      : r.modalidad === 'anterior' ? 'Pedido anterior · pagar el ' + ddmm(v) : 'Pagar el ' + ddmm(v);
     return `<div class="line"><div>${esc(r.producto)}<div class="mu ${late ? 'late' : ''}">${late ? 'Vencido · ' : ''}${txt}</div></div><strong>× ${r.cantidad}</strong></div>`;
   }).join('') : '<span class="mu">No tienes productos pendientes.</span>';
 }
@@ -351,9 +352,23 @@ const catDe = p => p.categoria || (/soda|agua|jugo|refresco|bebida|malta|cola|ba
 const disp = () => cat.filter(p => p.disponible);
 const accionVer = q => ({ t: 'Quiero ' + q.nombre, f: () => openSheet(q.codigo) });
 let favs = [];
+let frases = [];
+async function loadFrases() {
+  const { data } = await sb.from('frases').select('texto,momento,codigo').eq('activa', true);
+  frases = data || [];
+  // Las frases generales "al entrar" se mezclan con los lemas (con más peso)
+  frases.filter(f => f.momento === 'entrada' && !f.codigo).forEach(f => { for (let i = 0; i < 3; i++) LEMAS.push(esc(f.texto)); });
+}
+function hablaFrase(f, intro, sinBoton, prodFijo) {
+  const prod = prodFijo || (f.codigo && cat.find(p => p.codigo === f.codigo));
+  const txt = esc(f.texto).replace(/\{producto\}/g, prod ? esc(prod.nombre) : 'este producto');
+  habla((intro ? intro + ' ' : '') + txt, !sinBoton && prod && prod.disponible ? accionVer(prod) : null);
+}
 
 function habla(html, accion) {
-  $('mtxt').innerHTML = html;
+  $('mtxt').innerHTML = html
+    .replace(/\{cliente\}/g, esc($('cl').value ? nombreDe($('cl').value) : 'amigo'))
+    .replace(/\{producto\}/g, 'este producto');
   const b = $('mbtn');
   if (accion) {
     b.textContent = accion.t;
@@ -384,7 +399,12 @@ function tipPareja(p, intro) {
   habla((intro ? intro + ' ' : '') + t, accionVer(q));
 }
 function tipCompra(p) {
-  tipPareja(p, `¡Buena elección, ${esc(nombreDe($('cl').value))}! 🎉`);
+  const intro = `¡Buena elección, ${esc(nombreDe($('cl').value))}! 🎉`;
+  const prop = frases.filter(f => f.momento === 'compra' && (!f.codigo || f.codigo === p.codigo));
+  const propias = prop.filter(f => f.codigo === p.codigo);
+  const usar = propias.length ? propias : prop;
+  if (usar.length && Math.random() < 0.7) { hablaFrase(pick(usar), intro, true, p); return; }
+  tipPareja(p, intro);
 }
 async function tipCliente() {
   const c = $('cl').value;
@@ -405,6 +425,8 @@ async function tipCliente() {
 }
 $('mav').onclick = () => {
   const c = $('cl').value;
+  const az = frases.filter(f => f.momento === 'azar');
+  if (az.length && Math.random() < 0.4) { hablaFrase(pick(az)); return; }
   if (c && favs[0] && Math.random() < 0.6) {
     const p = cat.find(x => x.codigo === favs[0].codigo);
     if (p) { tipPareja(p, `${esc(nombreDe(c))}, ¿antojo?`); return; }
@@ -416,14 +438,16 @@ $('mav').onclick = () => {
 $('mx').onclick = () => $('mbub').classList.add('hide');
 function saludo() {
   setTimeout(() => {
-    if ($('cl').value) tipCliente();
+    if ($('cl').value) { tipCliente(); return; }
+    const ligadas = frases.filter(f => f.momento === 'entrada' && f.codigo && (cat.find(p => p.codigo === f.codigo) || {}).disponible);
+    if (ligadas.length && Math.random() < 0.6) hablaFrase(pick(ligadas));
     else habla(pick(LEMAS) + '<br><span class="mu">Elige tu nombre y te recomiendo algo a tu medida.</span>');
   }, 900);
 }
 
 /* ---------- Inicio ---------- */
 (async () => {
-  await Promise.all([loadClients(), loadCatalog(), loadPromos()]);
+  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases()]);
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
   saludo();

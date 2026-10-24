@@ -1,0 +1,16 @@
+-- CRISS' STORE · ¿Qué partes de la base de datos ya están instaladas?
+-- Pégalo en Supabase → SQL Editor → Run. Solo consulta; no cambia nada y se puede ejecutar las veces que quieras.
+-- Cada columna dice true (ya está) o false (falta ejecutar ese archivo).
+
+select
+  to_regclass('public.productos') is not null                                              as "supabase.sql",
+  to_regclass('public.promos') is not null and to_regclass('public.ajustes') is not null   as "supabase_v2.sql",
+  to_regclass('public.pagos') is not null and to_regclass('public.entradas') is not null   as "supabase_v3.sql",
+  exists (select 1 from information_schema.columns
+           where table_schema = 'public' and table_name = 'productos' and column_name = 'categoria') as "supabase_v4.sql",
+  to_regclass('public.comprobantes') is not null                                           as "supabase_v5.sql",
+  exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.proname = 'cambiar_modalidad')                 as "supabase_v6.sql",
+  exists (select 1 from information_schema.columns
+           where table_schema = 'public' and table_name = 'compras' and column_name = 'historico') as "supabase_v7.sql",
+  to_regclass('public.frases') is not null                                                 as "supabase_v8.sql";

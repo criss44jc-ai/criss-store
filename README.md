@@ -8,7 +8,7 @@ Control de compras, cobros e inventario en línea. Sitio estático (sin compilar
 - `admin.html`, `admin.js`, `admin2.js`: panel del administrador (se abre en `/admin.html`).
 - `mascota.png`: imagen de la mascota (portada, ícono y asistente).
 - `config.js`: URL y llave pública de Supabase (no lo reemplaces si ya tiene tus datos).
-- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
+- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
 
 ## Qué hace
 
@@ -23,3 +23,7 @@ Control de compras, cobros e inventario en línea. Sitio estático (sin compilar
 - La llave `anon` es pública a propósito; la protección está en las reglas de los archivos `.sql`.
 - Desactiva **Allow new users to sign up** en Supabase para que solo exista tu usuario administrador.
 - Nunca subas la llave `service_role` ni tu contraseña.
+
+## Guía paso a paso
+
+Lee `GUIA-INSTALACION.md`. Para saber qué partes de la base de datos ya ejecutaste, corre `verificar_supabase.sql`.

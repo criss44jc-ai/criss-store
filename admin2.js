@@ -81,12 +81,13 @@ function desde() {
   return new Date(n.getFullYear(), n.getMonth(), 1).toISOString();
 }
 async function loadUltimas() {
-  const { data } = await sb.from('compras').select('*').order('id', { ascending: false }).limit(15);
-  $('ult').innerHTML = data && data.length ? data.map(f => `
+  const r = await sb.from('compras').select('*').order('id', { ascending: false }).limit(60);
+  const data = (r.data || []).filter(f => !f.historico).slice(0, 15);
+  $('ult').innerHTML = data.length ? data.map(f => `
     <div class="line"><div><strong>${f.cantidad} × ${esc(f.producto_nombre)}</strong>
       <div class="mu">${esc(nombreDe(f.cliente_id))} · ${fdate(f.fecha)} · ${f.pagada ? '<span class="paid">COBRADA</span>' : modTxt(f)}</div></div>
       <div style="text-align:right"><strong>${money(f.monto)}</strong><br>
-        <button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') : '<div class="mu">Aún no hay ventas.</div>';
+        ${f.pagada ? '' : `<button class="btn sm" style="margin:4px 4px 0 0" data-cm="${f.id}">Cambiar pago</button>`}<button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') : '<div class="mu">Aún no hay ventas.</div>';
 }
 async function loadReports() {
   loadUltimas();
@@ -166,9 +167,10 @@ function renderKpis(rm) {
 
 /* ================= PROMOCIONES Y DATOS DE PAGO ================= */
 async function loadExtras() {
-  const [pr, aj] = await Promise.all([
+  const [pr, aj, fr] = await Promise.all([
     sb.from('promos').select('*').eq('activa', true).order('id', { ascending: false }),
-    sb.from('ajustes').select('*')
+    sb.from('ajustes').select('*'),
+    sb.from('frases').select('*').eq('activa', true).order('id', { ascending: false })
   ]);
   $('tp').innerHTML = '<option value="">Sin producto</option>' + prods.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)}</option>`).join('');
   $('tlist').innerHTML = pr.error ? '<div class="mu" style="margin-top:8px">Falta ejecutar supabase_v2.sql en Supabase.</div>'
@@ -177,6 +179,12 @@ async function loadExtras() {
   (aj.data || []).forEach(r => ajustes[r.clave] = r.valor);
   $('ptx').value = ajustes.pago_texto || '';
   showPago();
+  $('fp').innerHTML = '<option value="">Ninguno</option>' + prods.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)}</option>`).join('');
+  const MOM = { entrada: 'Al entrar', compra: 'Tras una compra', azar: 'Al tocarla' };
+  $('flist').innerHTML = fr.error ? '<div class="mu" style="margin-top:8px">Falta ejecutar supabase_v8.sql en Supabase.</div>'
+    : (fr.data || []).map(f => `<div class="line"><div>${esc(f.texto)}
+        <div class="mu">${MOM[f.momento]}${f.codigo ? ' · ' + esc((prods.find(p => p.codigo === f.codigo) || {}).nombre || f.codigo) : ''}</div></div>
+        <button class="btn sm red" data-qf="${f.id}">Quitar</button></div>`).join('');
 }
 function showPago() {
   const u = ajustes.pago_imagen;
@@ -204,6 +212,21 @@ $('tadd').onclick = async () => {
   } catch (e) { say('tmsg', 'No se pudo publicar: ' + (e.message || e), true); }
   $('tadd').disabled = false;
 };
+$('fadd').onclick = async () => {
+  const texto = $('fx').value.trim();
+  if (texto.length < 3) { say('fmsg', 'Escribe la frase (mínimo 3 letras).', true); return; }
+  const { error } = await sb.from('frases').insert({ texto, momento: $('fm').value, codigo: $('fp').value || null });
+  if (error) { say('fmsg', 'No se pudo guardar: ' + (/frases/.test(error.message) ? 'falta ejecutar supabase_v8.sql en Supabase.' : error.message), true); return; }
+  $('fx').value = '';
+  say('fmsg', 'Frase agregada. La mascota ya puede decirla.');
+  loadExtras();
+};
+$('flist').onclick = async e => {
+  const b = e.target.closest('[data-qf]');
+  if (!b) return;
+  await sb.from('frases').update({ activa: false }).eq('id', b.dataset.qf);
+  loadExtras();
+};
 async function guardarPago(quitarImg) {
   try {
     let url = quitarImg ? '' : (ajustes.pago_imagen || '');
@@ -221,6 +244,83 @@ async function guardarPago(quitarImg) {
 }
 $('psv').onclick = () => guardarPago(false);
 $('prm').onclick = () => guardarPago(true);
+
+/* ================= INFORME DEL DÍA ================= */
+let rTxt = '';
+const FMOD = { inmediato: 'Pago inmediato', quincena15: 'Pago el 15', quincena30: 'Pago el 30' };
+const sumar = (arr, fn) => arr.reduce((s, x) => s + Number(fn(x)), 0);
+
+async function openInforme() {
+  const dia = $('rfd').value || hoyISO();
+  const [y, m, d] = dia.split('-').map(Number);
+  const ini = new Date(y, m - 1, d).toISOString(), fin = new Date(y, m - 1, d + 1).toISOString();
+  const rng = q => q.gte('fecha', ini).lt('fecha', fin).order('id');
+  const [a, b, c] = await Promise.all([
+    rng(sb.from('compras').select('*')), rng(sb.from('pagos').select('*')), rng(sb.from('entradas').select('*'))
+  ]);
+  const ventas = (a.data || []).filter(f => !f.historico), pagos = b.data || [], ent = c.data || [];
+
+  const vendido = sumar(ventas, f => f.monto), costo = sumar(ventas, f => f.cantidad * f.costo_unit);
+  const unidades = sumar(ventas, f => f.cantidad), cobrado = sumar(pagos, p => p.monto), gastos = sumar(ent, e => e.costo_total);
+  const porProd = {}, porCli = {}, porMod = {}, porMet = {};
+  ventas.forEach(f => {
+    const p = porProd[f.producto_nombre] || (porProd[f.producto_nombre] = { q: 0, m: 0 }); p.q += f.cantidad; p.m += Number(f.monto);
+    const c2 = porCli[f.cliente_id] || (porCli[f.cliente_id] = { it: [], m: 0 }); c2.it.push(f.cantidad + ' × ' + f.producto_nombre); c2.m += Number(f.monto);
+    porMod[f.modalidad] = (porMod[f.modalidad] || 0) + Number(f.monto);
+  });
+  pagos.forEach(p => { porMet[p.metodo] = (porMet[p.metodo] || 0) + Number(p.monto); });
+  const hoy = hoyISO();
+  const porCobrar = sumar(pend, resta), vencido = sumar(pend.filter(f => f.vence < hoy), resta);
+  const bajos = prods.filter(p => p.stock <= p.umbral);
+
+  const secs = [];
+  const res = [['Pedidos', ventas.length], ['Unidades vendidas', unidades], ['Vendido', money(vendido)],
+    ['Costo de lo vendido', money(costo)], ['Ganancia del día', money(vendido - costo)]];
+  secs.push({ t: 'Ventas del día', l: res, nota: ventas.some(f => Number(f.costo_unit) === 0) && ventas.length ? 'Hay ventas sin costo cargado: la ganancia puede salir inflada.' : '' });
+  if (ventas.length) {
+    secs.push({ t: 'Productos vendidos', l: Object.entries(porProd).sort((x, y2) => y2[1].m - x[1].m).map(([n, v]) => [`${v.q} × ${n}`, money(v.m)]) });
+    secs.push({ t: 'Clientes que compraron', l: Object.entries(porCli).map(([k, v]) => [`${nombreDe(k)}: ${v.it.join(', ')}`, money(v.m)]) });
+    secs.push({ t: 'Cuándo pagarán lo vendido', l: Object.entries(porMod).map(([k, v]) => [FMOD[k] || k, money(v)]) });
+  }
+  secs.push({ t: 'Cobros del día', l: pagos.length ? [['Total cobrado', money(cobrado)], ...Object.entries(porMet).map(([k, v]) => ['· ' + k, money(v)]),
+    ...pagos.map(p => [`${nombreDe(p.cliente_id)} (${p.metodo})`, money(p.monto)])] : [['Sin cobros este día', '']] });
+  if (ent.length) secs.push({ t: 'Compras a proveedor', l: [['Total pagado', money(gastos)], ...ent.map(e => [`${e.cantidad} × ${e.producto_nombre}${e.proveedor ? ' · ' + e.proveedor : ''}`, money(e.costo_total)])] });
+  secs.push({ t: 'Situación actual', l: [['Por cobrar (todos)', money(porCobrar)], ['Vencido', money(vencido)],
+    ['Por agotarse', bajos.length ? bajos.map(p => `${p.nombre} (${p.stock})`).join(', ') : 'Nada']] });
+
+  const fechaTxt = new Date(y, m - 1, d).toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  $('rbody').innerHTML = `
+    <h2 style="font-size:24px">CRISS’ STORE</h2>
+    <div class="mu">Informe del día · ${esc(fechaTxt)}</div>
+    ${secs.map(s => `<div style="margin-top:16px"><strong>${esc(s.t)}</strong>
+      ${s.l.map(([k, v]) => `<div class="stl"><span>${esc(k)}</span><span><b>${esc(v)}</b></span></div>`).join('')}
+      ${s.nota ? `<div class="mu" style="margin-top:4px">${esc(s.nota)}</div>` : ''}</div>`).join('')}`;
+  rTxt = `*CRISS’ STORE* · Informe del día\n${fechaTxt}\n` +
+    secs.map(s => `\n*${s.t.toUpperCase()}*\n` + s.l.map(([k, v]) => v === '' ? k : `${k}: ${v}`).join('\n') + (s.nota ? `\n(${s.nota})` : '')).join('\n');
+  $('rep').classList.remove('hide');
+}
+async function jpgDe(el, nombre, btn, rotulo) {
+  btn.disabled = true; btn.textContent = 'Generando…';
+  try {
+    const cv = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.92));
+    const file = new File([blob], nombre, { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file] });
+    else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); }
+  } catch (e) { if (e.name !== 'AbortError') alert('No se pudo crear la imagen. Usa PDF o captura de pantalla.'); }
+  btn.disabled = false; btn.textContent = rotulo;
+}
+$('rfd').value = hoyISO();
+$('rfb').onclick = openInforme;
+$('rwa').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent(rTxt), '_blank');
+$('rpr').onclick = () => window.print();
+$('rx').onclick = () => $('rep').classList.add('hide');
+$('rjp').onclick = () => jpgDe($('rbody'), `informe-${$('rfd').value || hoyISO()}.jpg`, $('rjp'), 'Descargar JPG');
+$('rcp').onclick = async () => {
+  try { await navigator.clipboard.writeText(rTxt); $('rcp').textContent = 'Copiado'; }
+  catch (e) { $('rcp').textContent = 'No se pudo copiar'; }
+  setTimeout(() => $('rcp').textContent = 'Copiar texto', 1800);
+};
 
 /* ================= SESIÓN (va al final para que todo esté cargado) ================= */
 sb.auth.onAuthStateChange((ev, session) => {

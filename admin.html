@@ -65,7 +65,8 @@ input[type=checkbox]{width:auto}
 .mtab th,.mtab td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--ln)}
 .mtab th:first-child,.mtab td:first-child{text-align:left}
 .scroll{overflow-x:auto}
-@media print{body>*:not(#stmt){display:none!important}#stmt{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none}.noprint{display:none!important}}
+#stbody,#rbody{padding:24px 26px;background:#fff;color:var(--ink);border:1px solid var(--ln);border-radius:12px}
+@media print{body>*:not(#stmt):not(#rep){display:none!important}#stmt,#rep{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none;padding:0}#stbody,#rbody{border:0;border-radius:0;padding:36px 44px}.noprint{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -94,6 +95,13 @@ input[type=checkbox]{width:auto}
 <!-- ============ RESUMEN ============ -->
 <section class="pane" id="t-res">
   <div class="kpis" id="kpis"></div>
+  <div class="card">
+    <h2>Informe del día</h2>
+    <div class="row">
+      <div><label>Fecha</label><input id="rfd" type="date"></div>
+      <div style="align-self:end"><button class="btn go" id="rfb" style="width:100%;margin-top:0">Ver informe</button></div>
+    </div>
+  </div>
   <div class="card">
     <div class="line" style="border:0;padding:0"><h2 style="margin:0">Por agotarse</h2><button class="btn sm" id="out">Salir</button></div>
     <div id="alerts" style="margin-top:8px"></div>
@@ -130,6 +138,23 @@ input[type=checkbox]{width:auto}
     <button class="btn go" id="npadd">Crear pedido</button>
     <div class="msg" id="npmsg"></div>
   </div>
+  <div class="card">
+    <h2>Cargar pedido anterior</h2>
+    <div class="mu">Para cuentas por cobrar de antes de usar este sistema. No toca el inventario ni las ganancias. Si el cliente ya abonó algo, carga solo lo que falta por cobrar.</div>
+    <label>Cliente</label><select id="hcl"></select>
+    <label>Producto</label><input id="hpr" list="hprl" placeholder="Ej: Soda de naranja" autocomplete="off"><datalist id="hprl"></datalist>
+    <div class="row">
+      <div><label>Cantidad</label><input id="hq" type="number" min="1" step="1" value="1"></div>
+      <div><label>Monto por cobrar ($)</label><input id="hm" type="number" min="0" step="0.01"></div>
+    </div>
+    <div class="row">
+      <div><label>Fecha del pedido</label><input id="hfd" type="date"></div>
+      <div><label>Fecha de pago</label><input id="hvd" type="date"></div>
+    </div>
+    <button class="btn go" id="hadd">Cargar pedido anterior</button>
+    <div class="msg" id="hmsg"></div>
+  </div>
+
   <div class="card">
     <h2>Cuentas por cobrar</h2>
     <label>Cliente</label><select id="cs"></select>
@@ -170,6 +195,8 @@ input[type=checkbox]{width:auto}
       <div><label>Existencia inicial</label><input id="ps" type="number" min="0" step="1"></div>
       <div><label>Avisar cuando queden</label><input id="pu" type="number" min="0" value="2"></div>
     </div>
+    <label>Frase de la mascota para este producto (opcional)</label>
+    <input id="pfr" maxlength="200" placeholder="Ej: ¡Prueba lo nuevo, {cliente}! 😋">
     <label>Categoría (el asistente la usa para sugerir combinaciones)</label>
     <select id="pk"><option value="snack">Snack</option><option value="bebida">Bebida</option><option value="comida">Comida</option><option value="otro">Otro</option></select>
     <label>Foto del producto</label><input id="pf" type="file" accept="image/*">
@@ -202,6 +229,21 @@ input[type=checkbox]{width:auto}
   </div>
 
   <div class="card">
+    <h2>Frases de la mascota</h2>
+    <div class="mu">Crea lo que dirá tu mascota. Usa {cliente} para el nombre del cliente y {producto} para el nombre del producto relacionado.</div>
+    <label>Frase</label>
+    <textarea id="fx" rows="2" maxlength="200" placeholder="Ej: {cliente}, ¡llegó el platanito picante! 🌶️"></textarea>
+    <div class="row">
+      <div><label>¿Cuándo la dice?</label>
+        <select id="fm"><option value="entrada">Al entrar a la tienda</option><option value="compra">Después de una compra</option><option value="azar">Al tocarla</option></select></div>
+      <div><label>Producto relacionado (opcional)</label><select id="fp"></select></div>
+    </div>
+    <button class="btn go" id="fadd">Agregar frase</button>
+    <div class="msg" id="fmsg"></div>
+    <div id="flist"></div>
+  </div>
+
+  <div class="card">
     <h2>Datos de pago para el estado de cuenta</h2>
     <label>Texto (banco, cuenta, Yappy, etc.)</label>
     <textarea id="ptx" rows="3" placeholder="Ej: Banco General · Cuenta de ahorros 04-00-00-000000"></textarea>
@@ -228,6 +270,25 @@ input[type=checkbox]{width:auto}
     <button class="btn sm" id="stcp" style="padding:11px 8px">Copiar texto</button>
     <button class="btn sm" id="stx" style="padding:11px 8px;grid-column:1/-1">Cerrar</button>
   </div>
+</div></div>
+
+<div id="rep" class="sheet hide"><div class="stbox">
+  <div id="rbody"></div>
+  <div class="acts noprint">
+    <button class="btn go" id="rwa">Enviar por WhatsApp</button>
+    <button class="btn" id="rpr">Guardar PDF / imprimir</button>
+    <button class="btn" id="rjp">Descargar JPG</button>
+    <button class="btn sm" id="rcp" style="padding:11px 8px">Copiar texto</button>
+    <button class="btn sm" id="rx" style="padding:11px 8px;grid-column:1/-1">Cerrar</button>
+  </div>
+</div></div>
+
+<div id="cmsheet" class="sheet hide"><div>
+  <h2>Cambiar cuándo paga</h2>
+  <div class="mu" id="cmtx"></div>
+  <label>Nueva modalidad</label><select id="cmsel"></select>
+  <button class="btn go" id="cmok" style="width:100%">Guardar cambio</button>
+  <button class="btn sm" id="cmx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
 </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>

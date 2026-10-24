@@ -11,7 +11,8 @@ const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANO
 let clientes = [], prods = [], pend = [], ajustes = {}, isAdmin = false;
 const nombreDe = id => (clientes.find(c => c.id === id) || {}).nombre || id;
 const resta = f => Number(f.monto) - Number(f.pagado);
-const modTxt = f => f.modalidad === 'inmediato' ? 'Pago inmediato' : 'Vence ' + fvence(f.vence);
+const modTxt = f => f.modalidad === 'inmediato' ? 'Pago inmediato'
+  : (f.modalidad === 'anterior' ? 'Pedido anterior · ' : '') + 'Vence ' + fvence(f.vence);
 
 /* ---------- Pestañas y sesión ---------- */
 function tab(t) {
@@ -45,6 +46,9 @@ function fillClients() {
   const w = $('npc').value;
   $('npc').innerHTML = '<option value="">Elige el cliente</option>' + opts;
   if (w) $('npc').value = w;
+  const h = $('hcl').value;
+  $('hcl').innerHTML = '<option value="">Elige el cliente</option>' + opts;
+  if (h) $('hcl').value = h;
 }
 
 /* ---------- Imágenes ---------- */
@@ -90,6 +94,7 @@ function renderProdSelect() {
   const w = $('npp').value;
   $('npp').innerHTML = prods.filter(p => p.stock > 0).map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock})</option>`).join('');
   if (w) $('npp').value = w;
+  $('hprl').innerHTML = prods.map(p => `<option value="${esc(p.nombre)}">`).join('');
 }
 function renderProds() {
   const L = $('plist');
@@ -152,8 +157,14 @@ $('addp').onclick = async () => {
       precio, costo, stock, umbral: parseInt($('pu').value, 10) || 2, imagen_url, categoria: $('pk').value
     }).select().single();
     if (error) throw error;
-    ['pn', 'pm', 'pe', 'pp', 'pc', 'ps', 'pf'].forEach(i => $(i).value = '');
-    say('pmsg', `Producto ${data.codigo} guardado.` + (costo ? '' : ' Recuerda cargar su costo con una compra a proveedor.'));
+    const fr = $('pfr').value.trim();
+    let frMsg = '';
+    if (fr.length >= 3) {
+      const r = await sb.from('frases').insert({ texto: fr, momento: 'entrada', codigo: data.codigo });
+      frMsg = r.error ? ' La frase de la mascota no se guardó (¿ejecutaste supabase_v8.sql?).' : ' La mascota ya sabe promocionarlo.';
+    }
+    ['pn', 'pm', 'pe', 'pp', 'pc', 'ps', 'pf', 'pfr'].forEach(i => $(i).value = '');
+    say('pmsg', `Producto ${data.codigo} guardado.` + (costo ? '' : ' Recuerda cargar su costo con una compra a proveedor.') + frMsg);
     loadAll();
   } catch (e) { say('pmsg', 'No se pudo guardar: ' + (e.message || e), true); }
   $('addp').disabled = false;
@@ -221,7 +232,7 @@ function renderCob() {
       <div class="line"><div><strong>${esc(f.factura)}</strong> · ${f.cantidad} × ${esc(f.producto_nombre)}
         <div class="mu">${f.vence < hoy ? '<b class="low">Vencida</b> · ' : ''}${modTxt(f)}${Number(f.pagado) > 0 ? ' · abonado ' + money(f.pagado) : ''}</div></div>
         <div style="text-align:right"><strong>${money(resta(f))}</strong><br>
-          <button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') +
+          ${f.historico ? '' : `<button class="btn sm" style="margin:4px 4px 0 0" data-cm="${f.id}">Cambiar pago</button>`}<button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') +
       `<div style="margin-top:10px">Debe: <span class="total">${money(debe)}</span></div>
        <h2 style="margin-top:16px;font-size:16px">Registrar pago</h2>
        <div class="row">
@@ -266,6 +277,51 @@ $('cd').onclick = async e => {
     await loadAll();
     say('abmsg', Number(data) > 0.004 ? `Pago registrado. Todavía debe ${money(data)}.` : 'Pago registrado. Cuenta al día.');
   }
+};
+
+/* ---------- Cargar pedido anterior (no toca inventario ni ganancias) ---------- */
+$('hfd').max = hoyISO();
+$('hvd').value = hoyISO();
+$('hadd').onclick = async () => {
+  const c = $('hcl').value, prod = $('hpr').value.trim(), q = parseInt($('hq').value, 10);
+  const m = parseFloat($('hm').value), f = $('hfd').value, v = $('hvd').value;
+  if (!c || !prod || !(q > 0) || !(m > 0) || !f || !v) { say('hmsg', 'Completa cliente, producto, cantidad, monto y las dos fechas.', true); return; }
+  $('hadd').disabled = true;
+  const { data, error } = await sb.rpc('cargar_pedido_anterior', {
+    p_cliente: c, p_producto: prod, p_cantidad: q, p_monto: m, p_fecha: f, p_vence: v
+  });
+  $('hadd').disabled = false;
+  if (error) { say('hmsg', /cargar_pedido_anterior/.test(error.message) ? 'Falta ejecutar supabase_v7.sql en Supabase.' : error.message, true); return; }
+  ['hpr', 'hm', 'hfd'].forEach(i => $(i).value = ''); $('hq').value = 1;
+  await loadAll();
+  say('hmsg', `Pedido anterior cargado para ${nombreDe(c)} (${data}). El inventario no cambió.`);
+};
+
+/* ---------- Cambiar cuándo paga un pedido ---------- */
+let cmId = null;
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-cm]');
+  if (!b) return;
+  const f = pend.find(x => x.id == b.dataset.cm);
+  if (!f) return;
+  cmId = f.id;
+  const d = new Date(f.fecha), y = d.getFullYear(), m = d.getMonth();
+  const dd = x => x.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
+  const q30 = new Date(y, m, Math.min(30, new Date(y, m + 1, 0).getDate()));
+  $('cmtx').textContent = `${f.cantidad} × ${f.producto_nombre} · ${nombreDe(f.cliente_id)} · pedido del ${fdate(f.fecha)}`;
+  $('cmsel').innerHTML = [
+    ['inmediato', 'Pago inmediato'],
+    ['quincena15', `Pagar el 15 (${dd(new Date(y, m, 15))})`],
+    ['quincena30', `Pagar el ${q30.getDate() === 30 ? '30' : 'fin de mes'} (${dd(q30)})`]
+  ].map(([v, t]) => `<option value="${v}" ${v === f.modalidad ? 'selected' : ''}>${t}</option>`).join('');
+  $('cmsheet').classList.remove('hide');
+});
+$('cmx').onclick = () => $('cmsheet').classList.add('hide');
+$('cmok').onclick = async () => {
+  const { error } = await sb.rpc('cambiar_modalidad', { p_compra: cmId, p_modalidad: $('cmsel').value });
+  if (error) { alert(/cambiar_modalidad/.test(error.message) ? 'Falta ejecutar supabase_v6.sql en Supabase.' : error.message); return; }
+  $('cmsheet').classList.add('hide');
+  loadAll();
 };
 
 /* ---------- Anular pedidos y pagos ---------- */
