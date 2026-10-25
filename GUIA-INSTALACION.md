@@ -10,7 +10,8 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | `admin.html`, `admin.js`, `admin2.js` | Tu panel de administrador (se abre en `/admin.html`) |
 | `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
 | `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
-| `mascota.svg` | La misma mascota como imagen animada suelta (opcional) |
+| `mascota-pixel.js` y `mascota-pixel-alegre.gif`, `-canta.gif`, `-asoma.gif`, `-reposo.gif` | **La mascota pixelada animada** (la tienda necesita los 5 archivos) |
+| `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
 | `supabase.sql` a `supabase_v9.sql` | La base de datos, en 9 partes |
@@ -41,7 +42,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `mascota.png` y `mascota.js`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -83,7 +84,8 @@ En `/admin.html`, con tu correo y contraseña:
 - Si pasan 35 segundos sin que nadie toque la pantalla, se **duerme**; al tocar, se asoma de nuevo.
 - Para verla sin la tienda, abre `mascota-demo.html` con doble clic.
 - Si `mascota.js` no está subido, la tienda muestra la imagen fija de siempre.
-- **Cambiar de mascota:** en `/admin.html` → **Más → Mascota de la tienda** eliges **Interactiva** o **Imagen fija** y pulsas **Guardar**. Se aplica a todos tus clientes (necesita `supabase_v9.sql`). La imagen fija solo se sacude cuando habla.
+- **Cambiar de mascota:** en `/admin.html` → **Más → Mascota de la tienda** eliges **Interactiva (estilo cómic)**, **Pixelada (retro animada)** o **Imagen fija** y pulsas **Guardar**. Se aplica a todos tus clientes (necesita `supabase_v9.sql`). La interactiva y la pixelada se asoman, cantan y se duermen; la imagen fija solo se sacude al hablar.
+- **La imagen de la portada** (`mascota.png`) no cambia con ninguna opción.
 
 ## Seguridad
 

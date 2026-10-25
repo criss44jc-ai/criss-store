@@ -148,6 +148,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script src="mascota.js"></script>
+<script src="mascota-pixel.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -355,38 +356,45 @@ const accionVer = q => ({ t: 'Quiero ' + q.nombre, f: () => openSheet(q.codigo) 
 let favs = [];
 let frases = [];
 let tVuelta = null, tReposo = null;
-let modoMascota = 'animada';   // 'animada' (interactiva) o 'imagen' (fija)
+let modoMascota = 'animada';   // 'animada' (interactiva), 'pixel' (pixelada animada) o 'imagen' (fija)
+const modoValido = v => (v === 'imagen' || v === 'pixel') ? v : 'animada';
+function motor() {                // devuelve quien dibuja y mueve la mascota (null si es imagen fija)
+  if (modoMascota === 'pixel') return window.MascotaPixel || null;
+  if (modoMascota === 'animada') return window.Mascota || null;
+  return null;
+}
 function montarMascota(modo) {
-  modoMascota = modo === 'imagen' ? 'imagen' : 'animada';
-  const m = $('mav');
-  if (modoMascota === 'imagen' || !window.Mascota)
-    m.innerHTML = '<img src="mascota.png" alt="" style="width:100%;height:100%;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover">';
-  else Mascota.montar(m, 'asoma');
+  modoMascota = modoValido(modo);
+  const m = $('mav'), mo = motor();
+  if (mo) mo.montar(m, 'asoma');
+  else m.innerHTML = '<img src="mascota.png" alt="" style="width:100%;height:100%;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover">';
   programarReposo();
 }
 async function loadModoMascota() {
   const { data } = await sb.from('ajustes').select('valor').eq('clave', 'mascota_modo');
-  const modo = data && data[0] && data[0].valor === 'imagen' ? 'imagen' : 'animada';
+  const modo = modoValido(data && data[0] && data[0].valor);
   try { localStorage.setItem('mascotaModo', modo); } catch (e) {}
   if (modo !== modoMascota) montarMascota(modo);
 }
 function irA(estado, vuelveA, ms) {
-  if (modoMascota === 'imagen' || !window.Mascota) {
+  const mo = motor();
+  if (!mo) {                      // imagen fija: solo se sacude al hablar
     if (estado !== 'reposo') { const a = $('mav'); a.classList.remove('wig'); void a.offsetWidth; a.classList.add('wig'); }
     return;
   }
   clearTimeout(tVuelta);
-  Mascota.estado($('mav'), estado);
-  if (vuelveA) tVuelta = setTimeout(() => Mascota.estado($('mav'), vuelveA), ms);
+  mo.estado($('mav'), estado);
+  if (vuelveA) tVuelta = setTimeout(() => mo.estado($('mav'), vuelveA), ms);
   programarReposo();
 }
 function programarReposo() {
   clearTimeout(tReposo);
-  tReposo = setTimeout(() => { if (window.Mascota) Mascota.estado($('mav'), 'reposo'); }, 35000);
+  tReposo = setTimeout(() => { const mo = motor(); if (mo) mo.estado($('mav'), 'reposo'); }, 35000);
 }
 ['pointerdown', 'keydown', 'scroll'].forEach(ev => addEventListener(ev, () => {
-  if (!window.Mascota) return;
-  if (Mascota.actual($('mav')) === 'reposo') irA('asoma', 'alegre', 3400); else programarReposo();
+  const mo = motor();
+  if (!mo) return;
+  if (mo.actual($('mav')) === 'reposo') irA('asoma', 'alegre', 3400); else programarReposo();
 }, { passive: true }));
 async function loadFrases() {
   const { data } = await sb.from('frases').select('texto,momento,codigo').eq('activa', true);
@@ -482,7 +490,7 @@ function saludo() {
 
 /* ---------- Inicio ---------- */
 let modoInicial = 'animada';
-try { modoInicial = localStorage.getItem('mascotaModo') === 'imagen' ? 'imagen' : 'animada'; } catch (e) {}
+try { modoInicial = modoValido(localStorage.getItem('mascotaModo')); } catch (e) {}
 montarMascota(modoInicial);
 (async () => {
   await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota()]);
