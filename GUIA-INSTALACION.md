@@ -8,9 +8,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 |---|---|
 | `index.html` | La tienda que ven tus clientes |
 | `admin.html`, `admin.js`, `admin2.js` | Tu panel de administrador (se abre en `/admin.html`) |
-| `mascota.png` | La imagen de la portada y de la mascota |
+| `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
+| `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
+| `mascota.svg` | La misma mascota como imagen animada suelta (opcional) |
+| `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v8.sql` | La base de datos, en 8 partes |
+| `supabase.sql` a `supabase_v9.sql` | La base de datos, en 9 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -18,12 +21,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con ocho columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con nueve columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las ocho columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las nueve columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -38,7 +41,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js` y `mascota.png`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `mascota.png` y `mascota.js`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -72,6 +75,15 @@ En `/admin.html`, con tu correo y contraseña:
 - **No entra al panel:** confirma que el usuario existe en **Authentication → Users**.
 - **La página se ve igual que antes:** espera a que Vercel diga **Ready** y recarga con `Cmd + Shift + R`.
 - **La tienda deja de cargar tras una semana sin uso:** los proyectos gratis de Supabase se pausan; reactívalo con el botón de su panel.
+
+## La mascota animada
+
+- Al abrir la tienda se **asoma al vidrio**, y cuando habla **canta**.
+- Después se queda **alegre y pícara**: parpadea, guiña y mueve las cejas.
+- Si pasan 35 segundos sin que nadie toque la pantalla, se **duerme**; al tocar, se asoma de nuevo.
+- Para verla sin la tienda, abre `mascota-demo.html` con doble clic.
+- Si `mascota.js` no está subido, la tienda muestra la imagen fija de siempre.
+- **Cambiar de mascota:** en `/admin.html` → **Más → Mascota de la tienda** eliges **Interactiva** o **Imagen fija** y pulsas **Guardar**. Se aplica a todos tus clientes (necesita `supabase_v9.sql`). La imagen fija solo se sacude cuando habla.
 
 ## Seguridad
 

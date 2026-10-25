@@ -179,6 +179,8 @@ async function loadExtras() {
   (aj.data || []).forEach(r => ajustes[r.clave] = r.valor);
   $('ptx').value = ajustes.pago_texto || '';
   showPago();
+  $('mm').value = ajustes.mascota_modo === 'imagen' ? 'imagen' : 'animada';
+  verMascota();
   $('fp').innerHTML = '<option value="">Ninguno</option>' + prods.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)}</option>`).join('');
   const MOM = { entrada: 'Al entrar', compra: 'Tras una compra', azar: 'Al tocarla' };
   $('flist').innerHTML = fr.error ? '<div class="mu" style="margin-top:8px">Falta ejecutar supabase_v8.sql en Supabase.</div>'
@@ -211,6 +213,20 @@ $('tadd').onclick = async () => {
     loadExtras();
   } catch (e) { say('tmsg', 'No se pudo publicar: ' + (e.message || e), true); }
   $('tadd').disabled = false;
+};
+function verMascota() {
+  const box = $('mprev');
+  if ($('mm').value === 'imagen' || !window.Mascota)
+    box.innerHTML = '<img src="mascota.png" alt="" style="width:100%;height:100%;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover">';
+  else Mascota.montar(box, 'alegre');
+}
+$('mm').onchange = verMascota;
+$('msv').onclick = async () => {
+  const modo = $('mm').value;
+  const { error } = await sb.from('ajustes').upsert({ clave: 'mascota_modo', valor: modo });
+  if (error) { say('mmsg', 'No se pudo guardar: ' + error.message, true); return; }
+  ajustes.mascota_modo = modo;
+  say('mmsg', 'Listo. La tienda mostrará ' + (modo === 'imagen' ? 'la imagen fija.' : 'la mascota interactiva.'));
 };
 $('fadd').onclick = async () => {
   const texto = $('fx').value.trim();

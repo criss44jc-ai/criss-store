@@ -229,6 +229,16 @@ input[type=checkbox]{width:auto}
   </div>
 
   <div class="card">
+    <h2>Mascota de la tienda</h2>
+    <div class="mu">Elige cómo ven tus clientes a la mascota. La imagen fija solo se sacude cuando habla. La interactiva se asoma al vidrio, canta y se duerme.</div>
+    <label>Tipo de mascota</label>
+    <select id="mm"><option value="animada">Interactiva (animada)</option><option value="imagen">Imagen fija</option></select>
+    <div id="mprev" style="width:100px;height:100px;margin-top:10px"></div>
+    <button class="btn go" id="msv">Guardar</button>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="card">
     <h2>Frases de la mascota</h2>
     <div class="mu">Crea lo que dirá tu mascota. Usa {cliente} para el nombre del cliente y {producto} para el nombre del producto relacionado.</div>
     <label>Frase</label>
@@ -295,6 +305,7 @@ input[type=checkbox]{width:auto}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="config.js"></script>
+<script src="mascota.js"></script>
 <script src="admin.js"></script>
 <script src="admin2.js"></script>
 </body>

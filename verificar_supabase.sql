@@ -13,4 +13,6 @@ select
            where n.nspname = 'public' and p.proname = 'cambiar_modalidad')                 as "supabase_v6.sql",
   exists (select 1 from information_schema.columns
            where table_schema = 'public' and table_name = 'compras' and column_name = 'historico') as "supabase_v7.sql",
-  to_regclass('public.frases') is not null                                                 as "supabase_v8.sql";
+  to_regclass('public.frases') is not null                                                 as "supabase_v8.sql",
+  exists (select 1 from pg_policies
+           where schemaname = 'public' and tablename = 'ajustes' and policyname = 'ver modo de mascota') as "supabase_v9.sql";

@@ -63,7 +63,7 @@ input[type=text],input[type=file]{width:100%;padding:11px;border:1px solid var(-
 .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover;flex:none}
 .slogan{font-weight:700;font-size:14px;margin-top:4px}
 #mascota{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:4;display:flex;align-items:flex-end;gap:8px;max-width:calc(100% - 24px)}
-#mav{flex:none;width:68px;height:68px;padding:0;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;cursor:pointer;overflow:hidden;box-shadow:0 4px 14px rgba(18,38,58,.3)}
+#mav{flex:none;width:80px;height:80px;padding:0;border:0;background:none;cursor:pointer;overflow:visible;filter:drop-shadow(0 4px 8px rgba(18,38,58,.3))}
 #mav img{width:100%;height:100%;object-fit:cover;display:block}
 #mav.wig{animation:wig .7s ease}
 #mbub{position:relative;background:#fff;border:2px solid var(--ink);border-radius:16px 16px 16px 4px;padding:12px 30px 12px 12px;max-width:min(270px,calc(100vw - 120px));box-shadow:0 6px 18px rgba(18,38,58,.25);animation:pop .3s ease;font-size:15px}
@@ -126,7 +126,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 </div></div>
 
 <div id="mascota" aria-live="polite">
-  <button id="mav" aria-label="Asistente de CRISS’ STORE: toca para un consejo"><img src="mascota.png" alt=""></button>
+  <button id="mav" aria-label="Asistente de CRISS’ STORE: toca para un consejo"></button>
   <div id="mbub" class="hide">
     <button id="mx" aria-label="Cerrar mensaje">×</button>
     <div id="mtxt"></div>
@@ -147,6 +147,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
+<script src="mascota.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -353,6 +354,40 @@ const disp = () => cat.filter(p => p.disponible);
 const accionVer = q => ({ t: 'Quiero ' + q.nombre, f: () => openSheet(q.codigo) });
 let favs = [];
 let frases = [];
+let tVuelta = null, tReposo = null;
+let modoMascota = 'animada';   // 'animada' (interactiva) o 'imagen' (fija)
+function montarMascota(modo) {
+  modoMascota = modo === 'imagen' ? 'imagen' : 'animada';
+  const m = $('mav');
+  if (modoMascota === 'imagen' || !window.Mascota)
+    m.innerHTML = '<img src="mascota.png" alt="" style="width:100%;height:100%;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover">';
+  else Mascota.montar(m, 'asoma');
+  programarReposo();
+}
+async function loadModoMascota() {
+  const { data } = await sb.from('ajustes').select('valor').eq('clave', 'mascota_modo');
+  const modo = data && data[0] && data[0].valor === 'imagen' ? 'imagen' : 'animada';
+  try { localStorage.setItem('mascotaModo', modo); } catch (e) {}
+  if (modo !== modoMascota) montarMascota(modo);
+}
+function irA(estado, vuelveA, ms) {
+  if (modoMascota === 'imagen' || !window.Mascota) {
+    if (estado !== 'reposo') { const a = $('mav'); a.classList.remove('wig'); void a.offsetWidth; a.classList.add('wig'); }
+    return;
+  }
+  clearTimeout(tVuelta);
+  Mascota.estado($('mav'), estado);
+  if (vuelveA) tVuelta = setTimeout(() => Mascota.estado($('mav'), vuelveA), ms);
+  programarReposo();
+}
+function programarReposo() {
+  clearTimeout(tReposo);
+  tReposo = setTimeout(() => { if (window.Mascota) Mascota.estado($('mav'), 'reposo'); }, 35000);
+}
+['pointerdown', 'keydown', 'scroll'].forEach(ev => addEventListener(ev, () => {
+  if (!window.Mascota) return;
+  if (Mascota.actual($('mav')) === 'reposo') irA('asoma', 'alegre', 3400); else programarReposo();
+}, { passive: true }));
 async function loadFrases() {
   const { data } = await sb.from('frases').select('texto,momento,codigo').eq('activa', true);
   frases = data || [];
@@ -376,7 +411,7 @@ function habla(html, accion) {
     b.classList.remove('hide');
   } else b.classList.add('hide');
   $('mbub').classList.remove('hide');
-  const a = $('mav'); a.classList.remove('wig'); void a.offsetWidth; a.classList.add('wig');
+  irA('canta', 'alegre', 3400);
 }
 function pareja(p) {
   const pool = disp().filter(x => x.codigo !== p.codigo);
@@ -442,12 +477,15 @@ function saludo() {
     const ligadas = frases.filter(f => f.momento === 'entrada' && f.codigo && (cat.find(p => p.codigo === f.codigo) || {}).disponible);
     if (ligadas.length && Math.random() < 0.6) hablaFrase(pick(ligadas));
     else habla(pick(LEMAS) + '<br><span class="mu">Elige tu nombre y te recomiendo algo a tu medida.</span>');
-  }, 900);
+  }, 2600);
 }
 
 /* ---------- Inicio ---------- */
+let modoInicial = 'animada';
+try { modoInicial = localStorage.getItem('mascotaModo') === 'imagen' ? 'imagen' : 'animada'; } catch (e) {}
+montarMascota(modoInicial);
 (async () => {
-  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases()]);
+  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota()]);
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
   saludo();
