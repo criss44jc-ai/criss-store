@@ -14,7 +14,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v9.sql` | La base de datos, en 9 partes |
+| `supabase.sql` a `supabase_v10.sql` | La base de datos, en 10 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con nueve columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con diez columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las nueve columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las diez columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -76,6 +76,12 @@ En `/admin.html`, con tu correo y contraseña:
 - **No entra al panel:** confirma que el usuario existe en **Authentication → Users**.
 - **La página se ve igual que antes:** espera a que Vercel diga **Ready** y recarga con `Cmd + Shift + R`.
 - **La tienda deja de cargar tras una semana sin uso:** los proyectos gratis de Supabase se pausan; reactívalo con el botón de su panel.
+
+## Precios y pagos
+
+- Los clientes ven el **último precio cargado** de cada producto, y el total según la cantidad que eligen.
+- Al pulsar **Pagar ahora** ven el **monto a pagar**: lo que toca hoy y, si tienen más pendiente, pueden elegir pagar todo o adelantar.
+- Para cambiar un precio: **Inventario → Cambiar precio**. Solo afecta pedidos nuevos; los ya hechos conservan su precio.
 
 ## La mascota animada
 

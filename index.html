@@ -59,6 +59,7 @@ input[type=text],input[type=file]{width:100%;padding:11px;border:1px solid var(-
 .total{font:800 26px var(--hd);color:var(--ok)}
 #pyqr{display:block;width:100%;max-width:260px;margin:10px auto;border-radius:12px;border:1px solid var(--ln)}
 #pytx{white-space:pre-line;background:#f4f6f9;border-radius:10px;padding:10px 12px;margin:8px 0}
+.tile .pr{padding:0 10px 10px;font:800 17px var(--hd);color:var(--ok)}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover;flex:none}
 .slogan{font-weight:700;font-size:14px;margin-top:4px}
@@ -114,7 +115,8 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <div id="paysheet" class="sheet hide"><div>
   <h2>Paga ahora 💸</h2>
   <div class="mu">Hola <b id="pynom"></b>, tu pedido ya quedó registrado.</div>
-  <div style="margin:10px 0">Total a pagar hoy: <span class="total" id="pymonto"></span></div>
+  <div style="margin:10px 0">Monto a pagar: <span class="total" id="pymonto"></span></div>
+  <div id="pyopts"></div>
   <div class="mu">Con Yappy: escanea este código o guárdalo (mantén presionada la imagen) y súbelo desde la app.</div>
   <img id="pyqr" class="hide" alt="Código QR para pagar">
   <div id="pytx" class="hide"></div>
@@ -141,6 +143,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
   <h2 id="sn" style="margin-top:10px"></h2>
   <div class="mu" id="ss"></div>
   <div class="qty"><button id="mn" aria-label="Menos">−</button><b id="sq">1</b><button id="pl" aria-label="Más">+</button></div>
+  <div style="text-align:center;margin:-4px 0 12px"><div class="mu" id="spre"></div><div>Total: <span class="total" id="stot"></span></div></div>
   <h2 style="font-size:16px">¿Cuándo pagas?</h2>
   <div id="mods"></div>
   <button class="btn go" id="sok" style="width:100%">Confirmar retiro</button>
@@ -154,6 +157,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => '$' + Number(n || 0).toFixed(2);
 const say = (id, t, err) => { const e = $(id); e.textContent = t; e.classList.toggle('err', !!err); };
 const codeOf = t => { const r = /P-\d+/i.exec(String(t)); return r ? r[0].toUpperCase() : null; };
 const ddmm = d => d.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
@@ -199,6 +203,7 @@ async function loadCatalog() {
       ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="" loading="lazy">` : '<div class="ph">🛍️</div>'}
       <span class="nm">${esc(p.nombre)}</span>
       <span class="sub">${esc([p.marca, p.especificacion].filter(Boolean).join(' · '))}</span>
+      ${p.precio != null ? `<span class="pr">${money(p.precio)}</span>` : ''}
     </button>`).join('') : '<div class="mu">Todavía no hay productos.</div>';
 }
 $('cat').onclick = e => { const b = e.target.closest('.tile'); if (b && !b.disabled) openSheet(b.dataset.c); };
@@ -231,12 +236,18 @@ function renderMods() {
   $('mods').innerHTML = opts.map(([v, t, ok], i) =>
     `<label class="opt ${ok ? '' : 'off'}"><input type="radio" name="mod" value="${v}" ${i === 0 ? 'checked' : ''} ${ok ? '' : 'disabled'}> ${t}</label>`).join('');
 }
+function actualizaTotal() {
+  const p = cur && cur.precio != null ? Number(cur.precio) : null;
+  $('spre').textContent = p != null ? money(p) + ' cada uno' : '';
+  $('stot').textContent = p != null ? money(p * qty) : '';
+  $('stot').parentElement.classList.toggle('hide', p == null);
+}
 function openSheet(codigo) {
   if (!$('cl').value) { say('bm', 'Primero elige tu nombre.', true); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   cur = cat.find(p => p.codigo === codigo);
   if (!cur) { say('bm', 'Producto no encontrado: ' + codigo, true); return; }
   if (!cur.disponible) { say('bm', cur.nombre + ' está agotado.', true); return; }
-  qty = 1; $('sq').textContent = 1;
+  qty = 1; $('sq').textContent = 1; actualizaTotal();
   $('sn').textContent = cur.nombre;
   $('ss').textContent = [cur.marca, cur.especificacion].filter(Boolean).join(' · ');
   $('si').classList.toggle('hide', !cur.imagen_url);
@@ -246,8 +257,8 @@ function openSheet(codigo) {
 }
 const closeSheet = () => { $('sheet').classList.add('hide'); cur = null; };
 $('scx').onclick = closeSheet;
-$('mn').onclick = () => { qty = Math.max(1, qty - 1); $('sq').textContent = qty; };
-$('pl').onclick = () => { qty = Math.min(50, qty + 1); $('sq').textContent = qty; };
+$('mn').onclick = () => { qty = Math.max(1, qty - 1); $('sq').textContent = qty; actualizaTotal(); };
+$('pl').onclick = () => { qty = Math.min(50, qty + 1); $('sq').textContent = qty; actualizaTotal(); };
 $('sok').onclick = async () => {
   if (!cur) return;
   const mod = (document.querySelector('input[name=mod]:checked') || {}).value || 'inmediato';
@@ -259,7 +270,7 @@ $('sok').onclick = async () => {
   if (error) say('bm', error.message, true);
   else {
     const cuando = mod === 'inmediato' ? 'pago inmediato' : 'pagas el ' + ddmm(new Date(data.vence + 'T00:00:00'));
-    say('bm', `Listo ${nombreDe($('cl').value)}: ${n} × ${nombre} quedó en tu cuenta (${cuando}).`);
+    say('bm', `Listo ${nombreDe($('cl').value)}: ${n} × ${nombre} quedó en tu cuenta (${cuando}).${prod.precio != null ? ' Total: ' + money(prod.precio * n) + '.' : ''}`);
     if (mod === 'inmediato') abrirPago();
   }
   loadAccount(); loadCatalog().then(() => { if (!error) tipCompra(prod); });
@@ -277,24 +288,40 @@ async function reducir(file, max = 1400, q = 0.85) {
   g.drawImage(bmp, 0, 0, cv.width, cv.height);
   return new Promise(res => cv.toBlob(res, 'image/jpeg', q));
 }
+function montoSeleccionado() {
+  const d = datosPago, r = document.querySelector('input[name=pym]:checked');
+  const v = r ? r.value : (Number(d.a_pagar) > 0 ? 'hoy' : 'todo');
+  return v === 'todo' ? Number(d.total_pendiente) : Number(d.a_pagar);
+}
+function pintarMonto() { $('pymonto').textContent = money(montoSeleccionado()); }
 async function abrirPago() {
   const c = $('cl').value;
   if (!c) { say('bm', 'Primero elige tu nombre.', true); return; }
   const { data } = await sb.rpc('datos_pago', { p_cliente: c });
   const d = data && data[0];
-  if (!d || !(Number(d.a_pagar) > 0)) { say('bm', 'No tienes pagos para hoy. ¡Estás al día! 🎉'); return; }
-  if (!d.texto && !d.imagen) { say('bm', 'Todavía no hay datos de pago cargados. Pregunta en la tienda cómo pagar.', true); return; }
+  const hoy = d ? Number(d.a_pagar) : 0;
+  const total = d ? Number(d.total_pendiente != null ? d.total_pendiente : d.a_pagar) : 0;
+  if (!d || !(total > 0)) { say('bm', 'No tienes pagos pendientes. ¡Estás al día! 🎉'); return; }
+  d.total_pendiente = total;
   datosPago = d;
+  const opts = [];
+  if (hoy > 0) opts.push(['hoy', `Lo que toca pagar hoy: ${money(hoy)}`]);
+  if (total > hoy + 0.004) opts.push(['todo', `Todo lo pendiente: ${money(total)}${hoy > 0 ? '' : ' (adelantar pago)'}`]);
+  $('pyopts').innerHTML = opts.length > 1
+    ? opts.map(([v, t], i) => `<label class="opt"><input type="radio" name="pym" value="${v}" ${i === 0 ? 'checked' : ''}> ${t}</label>`).join('')
+    : (hoy <= 0 ? '<div class="mu" style="margin-bottom:8px">Todavía no te toca pagar, pero puedes adelantar tu pago.</div>' : '');
+  pintarMonto();
   $('pynom').textContent = nombreDe(c);
-  $('pymonto').textContent = '$' + Number(d.a_pagar).toFixed(2);
   $('pyqr').classList.toggle('hide', !d.imagen);
   if (d.imagen) $('pyqr').src = d.imagen;
-  $('pytx').classList.toggle('hide', !d.texto);
-  $('pytx').textContent = d.texto || '';
+  const txt = d.texto || (d.imagen ? '' : 'Todavía no hay datos de pago cargados. Pregunta en la tienda cómo pagar.');
+  $('pytx').classList.toggle('hide', !txt);
+  $('pytx').textContent = txt;
   $('pycp').classList.toggle('hide', !d.texto);
   $('pyf').value = ''; $('pynota').value = ''; say('pymsg', '');
   $('paysheet').classList.remove('hide');
 }
+$('pyopts').onchange = pintarMonto;
 $('paybtn').onclick = abrirPago;
 $('pyx').onclick = () => $('paysheet').classList.add('hide');
 $('pycp').onclick = async () => {
@@ -311,7 +338,7 @@ $('pyup').onclick = async () => {
     const path = `${c}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
     const up = await sb.storage.from('comprobantes').upload(path, blob, { contentType: 'image/jpeg' });
     if (up.error) throw up.error;
-    const { error } = await sb.rpc('reportar_pago', { p_cliente: c, p_path: path, p_nota: $('pynota').value.trim() || null });
+    const { error } = await sb.rpc('reportar_pago', { p_cliente: c, p_path: path, p_nota: $('pynota').value.trim() || null, p_monto: montoSeleccionado() });
     if (error) throw error;
     $('pyf').value = ''; $('pynota').value = '';
     say('pymsg', '¡Listo! Recibimos tu comprobante. Lo revisaremos y tu cuenta se actualizará.');

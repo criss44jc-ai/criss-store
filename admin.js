@@ -89,10 +89,10 @@ function renderAlerts() {
 }
 function renderProdSelect() {
   const v = $('ep').value;
-  $('ep').innerHTML = prods.map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock})</option>`).join('');
+  $('ep').innerHTML = prods.map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock}) · ${money(p.precio)}</option>`).join('');
   if (v) $('ep').value = v;
   const w = $('npp').value;
-  $('npp').innerHTML = prods.filter(p => p.stock > 0).map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock})</option>`).join('');
+  $('npp').innerHTML = prods.filter(p => p.stock > 0).map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock}) · ${money(p.precio)}</option>`).join('');
   if (w) $('npp').value = w;
   $('hprl').innerHTML = prods.map(p => `<option value="${esc(p.nombre)}">`).join('');
 }
@@ -114,6 +114,7 @@ function renderProds() {
         </select>
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <button class="btn sm" data-rep="${p.id}">Comprar a proveedor</button>
+          <button class="btn sm" data-pr="${p.id}">Cambiar precio</button>
           <label class="btn sm" style="cursor:pointer;margin:0;display:inline-block">Cambiar foto<input type="file" accept="image/*" hidden data-img="${p.id}"></label>
           <button class="btn sm red" data-del="${p.id}">Quitar</button>
         </div>
@@ -296,6 +297,20 @@ $('hadd').onclick = async () => {
   await loadAll();
   say('hmsg', `Pedido anterior cargado para ${nombreDe(c)} (${data}). El inventario no cambió.`);
 };
+
+/* ---------- Cambiar el precio de un producto ---------- */
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-pr]');
+  if (!b) return;
+  const p = prods.find(x => x.id == b.dataset.pr);
+  const txt = prompt(`Nuevo precio de ${p.nombre} ($).\nSolo afecta los pedidos nuevos; los ya hechos conservan su precio.`, Number(p.precio).toFixed(2));
+  if (txt === null) return;
+  const v = parseFloat(String(txt).replace(',', '.'));
+  if (!(v >= 0)) { alert('Escribe un precio válido.'); return; }
+  const { error } = await sb.from('productos').update({ precio: v }).eq('id', p.id);
+  if (error) { alert('No se pudo cambiar el precio: ' + error.message); return; }
+  loadAll();
+});
 
 /* ---------- Cambiar cuándo paga un pedido ---------- */
 let cmId = null;

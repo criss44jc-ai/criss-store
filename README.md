@@ -10,7 +10,7 @@ Control de compras, cobros e inventario en línea. Sitio estático (sin compilar
 - `mascota.js`, `mascota.svg`, `mascota-demo.html`: la mascota interactiva en estilo cómic.
 - `mascota-pixel.js` y `mascota-pixel-*.gif`: la mascota pixelada animada.
 - `config.js`: URL y llave pública de Supabase (no lo reemplaces si ya tiene tus datos).
-- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
+- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
 
 ## Qué hace
 
