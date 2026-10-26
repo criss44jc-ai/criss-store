@@ -72,6 +72,8 @@ input[type=text],input[type=file]{width:100%;padding:11px;border:1px solid var(-
 #mbtn{margin-top:8px;width:100%;padding:9px 10px;font-size:15px}
 @keyframes pop{from{transform:scale(.6);opacity:0;transform-origin:left bottom}to{transform:none;opacity:1}}
 @keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg) scale(1.08)}75%{transform:rotate(10deg) scale(1.08)}}
+#mascota.px #mav{width:128px;height:128px}
+#mascota.px #mbub{max-width:min(270px,calc(100vw - 172px))}
 main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -365,6 +367,7 @@ function motor() {                // devuelve quien dibuja y mueve la mascota (n
 }
 function montarMascota(modo) {
   modoMascota = modoValido(modo);
+  $('mascota').classList.toggle('px', modoMascota === 'pixel');
   const m = $('mav'), mo = motor();
   if (mo) mo.montar(m, 'asoma');
   else m.innerHTML = '<img src="mascota.png" alt="" style="width:100%;height:100%;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover">';
