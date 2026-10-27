@@ -18,6 +18,7 @@ const modTxt = f => f.modalidad === 'inmediato' ? 'Pago inmediato'
 function tab(t) {
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('hide', p.id !== 't-' + t));
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  if (t === 'cli' && typeof loadClientes === 'function') loadClientes();
 }
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 $('lg').onclick = async () => {

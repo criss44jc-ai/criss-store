@@ -5,12 +5,12 @@ Control de compras, cobros e inventario en línea. Sitio estático (sin compilar
 ## Archivos (todos en la raíz del repositorio)
 
 - `index.html`: tienda para los clientes.
-- `admin.html`, `admin.js`, `admin2.js`: panel del administrador (se abre en `/admin.html`).
+- `admin.html`, `admin.js`, `admin2.js`, `admin3.js`: panel del administrador (se abre en `/admin.html`).
 - `mascota.png`: imagen de la mascota (portada, ícono y respaldo).
 - `mascota.js`, `mascota.svg`, `mascota-demo.html`: la mascota interactiva en estilo cómic.
 - `mascota-pixel.js` y `mascota-pixel-*.gif`: la mascota pixelada animada.
 - `config.js`: URL y llave pública de Supabase (no lo reemplaces si ya tiene tus datos).
-- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
+- `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`: base de datos. Se ejecutan **una sola vez cada uno y en ese orden** en Supabase → SQL Editor.
 
 ## Qué hace
 

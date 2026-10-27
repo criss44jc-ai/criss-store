@@ -65,6 +65,24 @@ input[type=checkbox]{width:auto}
 .mtab th,.mtab td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--ln)}
 .mtab th:first-child,.mtab td:first-child{text-align:left}
 .scroll{overflow-x:auto}
+.av{width:46px;height:46px;border-radius:50%;object-fit:cover;display:grid;place-items:center;font-size:24px;border:2px solid var(--ink);flex:none;overflow:hidden;color:#fff;font-weight:800}
+.av.g{width:88px;height:88px;font-size:46px}
+.rowc{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--ln);cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.stat{background:#f4f6f9;border-radius:10px;padding:8px 4px;text-align:center}
+.stat b{display:block;font:800 17px var(--hd)}
+.stat span{font-size:12px;color:var(--mu)}
+.emoji{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.emoji button{font-size:24px;border:1px solid var(--ln);background:#fff;border-radius:10px;width:44px;height:44px;cursor:pointer}
+details{margin-top:10px}
+summary{cursor:pointer;font-weight:700}
+#perfil>div{max-width:640px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;background:var(--ln);color:var(--ink)}
+.badge.mal{background:#ffe3e3;color:#c92a2a}
+.badge.ok{background:#d3f9d8;color:#2b8a3e}
+.sec{margin-top:18px}
+.sec h3{font:700 16px var(--hd);margin:0 0 4px}
+nav button{font-size:13px;padding:9px 2px}
 #stbody,#rbody{padding:24px 26px;background:#fff;color:var(--ink);border:1px solid var(--ln);border-radius:12px}
 @media print{body>*:not(#stmt):not(#rep){display:none!important}#stmt,#rep{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none;padding:0}#stbody,#rbody{border:0;border-radius:0;padding:36px 44px}.noprint{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -77,6 +95,7 @@ input[type=checkbox]{width:auto}
     <button data-t="res" class="on">Resumen</button>
     <button data-t="cob">Cobros</button>
     <button data-t="inv">Inventario</button>
+    <button data-t="cli">Clientes</button>
     <button data-t="mas">Más</button>
   </nav>
 </div></header>
@@ -208,6 +227,63 @@ input[type=checkbox]{width:auto}
   <div id="plist"></div>
 </section>
 
+<!-- ============ CLIENTES ============ -->
+<section class="pane hide" id="t-cli">
+  <div class="card">
+    <h2>Clientes</h2>
+    <input id="cbq" placeholder="Buscar por nombre o número…">
+    <div id="cbd" style="margin-top:8px"></div>
+    <div id="clist" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Premios</h2>
+    <div class="mu">Define cuándo premiar y revisa quién lo merece. Tú decides a quién se lo das.</div>
+    <div id="rlist" style="margin-top:6px"></div>
+    <details>
+      <summary>➕ Crear regla de premio</summary>
+      <label>Nombre de la regla</label><input id="rn" placeholder="Ej: Premio del cliente del mes">
+      <label>¿Cuándo se premia?</label>
+      <select id="rt">
+        <option value="cumpleanos">En su cumpleaños</option>
+        <option value="producto">Por comprar un producto</option>
+        <option value="mas_compra">Al cliente que más compra</option>
+        <option value="mas_producto">Al cliente que más compra un producto</option>
+      </select>
+      <div id="rprodw" class="hide"><label>Producto</label><select id="rprod"></select></div>
+      <div class="row">
+        <div id="rminw" class="hide"><label>Unidades mínimas</label><input id="rmin" type="number" min="1" value="1"></div>
+        <div id="rperw" class="hide"><label>Período</label><select id="rper"><option value="mes">Este mes</option><option value="todo">Todo el tiempo</option></select></div>
+      </div>
+      <label>Premio</label><input id="rp" placeholder="Ej: Una soda gratis">
+      <button class="btn go" id="radd">Guardar regla</button>
+      <div class="msg" id="rmsg"></div>
+    </details>
+    <div class="sec"><h3>Últimos premios</h3><div id="plst"></div></div>
+  </div>
+
+  <div class="card">
+    <h2>Tómbola 🎟️</h2>
+    <div class="mu">Sortea un premio por suerte entre los clientes que elijas.</div>
+    <label>Premio</label><input id="tn" placeholder="Ej: Combo de soda y platanito">
+    <div class="row">
+      <div><label>Participan</label>
+        <select id="tpool">
+          <option value="todos">Todos los clientes</option>
+          <option value="mes">Los que compraron este mes</option>
+          <option value="producto">Los que compraron un producto</option>
+          <option value="sindeuda">Los que no tienen deuda vencida</option>
+        </select></div>
+      <div><label>Ganadores</label><input id="tnum" type="number" min="1" value="1"></div>
+    </div>
+    <div id="tprodw" class="hide"><label>Producto</label><select id="tprod"></select></div>
+    <button class="btn go" id="tsort">🎰 Sortear</button>
+    <div class="msg" id="tmsg2"></div>
+    <div id="tres"></div>
+    <div class="sec"><h3>Tómbolas anteriores</h3><div id="thist"></div></div>
+  </div>
+</section>
+
 <!-- ============ MÁS ============ -->
 <section class="pane hide" id="t-mas">
   <div class="card">
@@ -282,6 +358,11 @@ input[type=checkbox]{width:auto}
   </div>
 </div></div>
 
+<div id="perfil" class="sheet hide"><div class="stbox">
+  <div id="pbody"></div>
+  <button class="btn sm" id="pcl" style="width:100%;margin-top:14px;padding:11px">Cerrar perfil</button>
+</div></div>
+
 <div id="rep" class="sheet hide"><div class="stbox">
   <div id="rbody"></div>
   <div class="acts noprint">
@@ -309,5 +390,6 @@ input[type=checkbox]{width:auto}
 <script src="mascota-pixel.js"></script>
 <script src="admin.js"></script>
 <script src="admin2.js"></script>
+<script src="admin3.js"></script>
 </body>
 </html>

@@ -18,4 +18,5 @@ select
            where schemaname = 'public' and tablename = 'ajustes' and policyname = 'ver modo de mascota') as "supabase_v9.sql",
   exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.proname = 'catalogo'
-             and pg_get_function_result(p.oid) like '%precio%')                                as "supabase_v10.sql";
+             and pg_get_function_result(p.oid) like '%precio%')                                as "supabase_v10.sql",
+  to_regclass('public.perfiles') is not null and to_regclass('public.premios') is not null   as "supabase_v11.sql";
