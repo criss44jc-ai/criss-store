@@ -19,6 +19,7 @@ function tab(t) {
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('hide', p.id !== 't-' + t));
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'cli' && typeof loadClientes === 'function') loadClientes();
+  if (t === 'loc' && typeof loadLocales === 'function') loadLocales();
 }
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 $('lg').onclick = async () => {
@@ -35,7 +36,7 @@ async function loadAll() {
     sb.from('compras').select('*').eq('pagada', false).order('vence').order('id')
   ]);
   clientes = cl.data || []; prods = p.data || []; pend = c.data || [];
-  fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas(); loadComps();
+  fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas(); loadComps(); loadAnulaciones();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
 }
@@ -349,13 +350,60 @@ document.addEventListener('click', async e => {
     if (error) { alert(error.message); return; }
     loadAll();
   }
-  if (b) {
-    if (!confirm(`¿Anular ${b.dataset.desc}?\nLo que debe el cliente vuelve a subir.`)) return;
-    const { error } = await sb.rpc('anular_pago', { p_pago: Number(b.dataset.anp) });
-    if (error) { alert(error.message); return; }
-    loadAll();
-  }
+  if (b) abrirAnularPago(b.dataset.anp, b.dataset.desc);
 });
+
+/* ---------- Anular un pago: pide motivo, comentario y, si quieres, una foto ---------- */
+const MOTIVOS_ANU = { duplicado: 'Pago duplicado', no_pago: 'Marcado como pagado, pero el cliente no pagó', monto: 'Monto o cliente equivocado', otro: 'Otro motivo' };
+let anpId = null;
+function abrirAnularPago(id, desc) {
+  anpId = Number(id);
+  $('anptx').textContent = `Vas a anular ${desc}. Lo que debe el cliente vuelve a subir.`;
+  $('anpmot').value = 'duplicado'; $('anpcom').value = ''; $('anpfoto').value = ''; say('anpmsg', '');
+  $('anpago').classList.remove('hide');
+}
+$('anpx').onclick = () => $('anpago').classList.add('hide');
+$('anpok').onclick = async () => {
+  const com = $('anpcom').value.trim();
+  if (com.length < 5) { say('anpmsg', 'El comentario es obligatorio (mínimo 5 letras).', true); return; }
+  $('anpok').disabled = true; say('anpmsg', 'Guardando…');
+  try {
+    let path = null; const f = $('anpfoto').files[0];
+    if (f) {
+      let blob;
+      try { blob = await reducir(f, 1400, 0.85); }
+      catch (err) { say('anpmsg', 'No se pudo usar esa foto. Elige otra imagen o quítala para continuar.', true); $('anpok').disabled = false; return; }
+      path = `pago-${anpId}-${Date.now()}.jpg`;
+      const up = await sb.storage.from('evidencias').upload(path, blob, { contentType: 'image/jpeg' });
+      if (up.error) throw up.error;
+    }
+    const { error } = await sb.rpc('anular_pago', { p_pago: anpId, p_motivo: $('anpmot').value, p_comentario: com, p_foto_path: path });
+    if (error) throw error;
+    $('anpago').classList.add('hide');
+    await loadAll();
+    if (typeof abrirPerfil === 'function' && pfCliente && !$('perfil').classList.contains('hide')) abrirPerfil(pfCliente);
+  } catch (e) {
+    const m = (e && e.message) || String(e);
+    say('anpmsg', /anular_pago|evidencias|bucket/i.test(m) ? 'Falta ejecutar supabase_v12.sql en Supabase.' : m, true);
+  }
+  $('anpok').disabled = false;
+};
+async function loadAnulaciones() {
+  const { data, error } = await sb.from('anulaciones').select('*').order('id', { ascending: false }).limit(20);
+  $('anlist').innerHTML = error ? '<div class="mu">Falta ejecutar supabase_v12.sql en Supabase.</div>'
+    : (data && data.length ? data.map(a => `
+      <div class="line" style="align-items:flex-start"><div><b>${esc(nombreDe(a.cliente_id))}</b> · ${money(a.monto)}
+        <div class="mu">${fdate(a.fecha)} · <b>${esc(MOTIVOS_ANU[a.motivo] || a.motivo)}</b></div>
+        <div>${esc(a.comentario)}</div><div class="mu">${esc(a.detalle || '')}</div></div>
+        ${a.foto_path ? `<button class="btn sm" data-ev="${esc(a.foto_path)}">Ver foto</button>` : ''}</div>`).join('')
+      : '<div class="mu">Todavía no has anulado pagos.</div>');
+}
+async function verEvidencia(path) {
+  const { data, error } = await sb.storage.from('evidencias').createSignedUrl(path, 600);
+  if (error) { alert('No se pudo abrir la foto.'); return; }
+  window.open(data.signedUrl, '_blank') || (location.href = data.signedUrl);
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-ev]'); if (b) verEvidencia(b.dataset.ev); });
 
 /* ---------- Comprobantes de pago de los clientes ---------- */
 let comps = [];

@@ -58,14 +58,15 @@ async function abrirPerfil(id) {
   pfCliente = id;
   $('pbody').innerHTML = '<div class="mu">Cargando…</div>';
   $('perfil').classList.remove('hide');
-  const [cm, pg, cp, pr, pf] = await Promise.all([
+  const [cm, pg, cp, pr, pf, an] = await Promise.all([
     sb.from('compras').select('*').eq('cliente_id', id).order('fecha', { ascending: false }).limit(1000),
     sb.from('pagos').select('*').eq('cliente_id', id).order('id', { ascending: false }).limit(200),
     sb.from('comprobantes').select('*').eq('cliente_id', id).order('id', { ascending: false }).limit(100),
     sb.from('premios').select('*').eq('cliente_id', id).order('id', { ascending: false }).limit(100),
-    sb.from('perfiles').select('*').eq('cliente_id', id).maybeSingle()
+    sb.from('perfiles').select('*').eq('cliente_id', id).maybeSingle(),
+    sb.from('anulaciones').select('*').eq('cliente_id', id).order('id', { ascending: false }).limit(50)
   ]);
-  pfDatos = { compras: cm.data || [], pagos: pg.data || [], comp: cp.data || [], premios: pr.data || [], perfil: pf.data || { cliente_id: id } };
+  pfDatos = { anul: an.data || [], compras: cm.data || [], pagos: pg.data || [], comp: cp.data || [], premios: pr.data || [], perfil: pf.data || { cliente_id: id } };
   perfiles[id] = Object.assign(perfiles[id] || {}, pfDatos.perfil);
   renderPerfil();
 }
@@ -141,12 +142,15 @@ function renderPerfil() {
     <div class="sec"><h3>Pagos realizados</h3>
       ${d.pagos.length ? d.pagos.map(x => { const m = /Comprobante #(\d+)/.exec(x.nota || ''), sc = m && compPorId[m[1]];
         return `<div class="line"><div>${fdate(x.fecha)} · ${esc(x.metodo)}${x.nota ? '<div class="mu">' + esc(x.nota) + '</div>' : ''}</div>
-          <div style="text-align:right"><b>${money(x.monto)}</b>${sc ? `<div><button class="btn sm" data-sp="${esc(sc.archivo_path)}">Ver soporte</button></div>` : ''}</div></div>`; }).join('')
+          <div style="text-align:right"><b>${money(x.monto)}</b>${sc ? `<div><button class="btn sm" data-sp="${esc(sc.archivo_path)}">Ver soporte</button></div>` : ''}<div style="margin-top:4px"><button class="btn sm red" data-anp="${x.id}" data-desc="el pago de ${money(x.monto)} del ${fdate(x.fecha)}">Anular</button></div></div></div>`; }).join('')
         : '<div class="mu">Sin pagos registrados.</div>'}</div>
 
     ${d.comp.length ? `<div class="sec"><h3>Soportes enviados por el cliente</h3>${d.comp.map(c => `<div class="line"><div>${fdate(c.fecha)} · ${Number(c.monto) > 0 ? money(c.monto) : ''}
         <span class="badge ${c.estado === 'verificado' ? 'ok' : c.estado === 'rechazado' ? 'mal' : ''}">${esc(c.estado)}</span>${c.nota ? '<div class="mu">' + esc(c.nota) + '</div>' : ''}</div>
         <button class="btn sm" data-sp="${esc(c.archivo_path)}">Ver captura</button></div>`).join('')}</div>` : ''}
+
+    ${d.anul && d.anul.length ? `<div class="sec"><h3>Pagos anulados</h3>${d.anul.map(a => `<div class="line" style="align-items:flex-start"><div>${fdate(a.fecha)} · ${money(a.monto)} · <b>${esc(MOTIVOS_ANU[a.motivo] || a.motivo)}</b>
+        <div>${esc(a.comentario)}</div><div class="mu">${esc(a.detalle || '')}</div></div>${a.foto_path ? `<button class="btn sm" data-ev="${esc(a.foto_path)}">Ver foto</button>` : ''}</div>`).join('')}</div>` : ''}
 
     <div class="sec"><h3>Pendiente por pagar</h3>
       ${pend.length ? pend.map(f => `<div class="line"><div>${f.cantidad} × ${esc(f.producto_nombre)}<div class="mu">${f.vence < hoyISO() ? '<b class="low">Vencido</b> · ' : ''}${modTxt(f)}</div></div><b>${money(resta(f))}</b></div>`).join('')

@@ -82,7 +82,9 @@ summary{cursor:pointer;font-weight:700}
 .badge.ok{background:#d3f9d8;color:#2b8a3e}
 .sec{margin-top:18px}
 .sec h3{font:700 16px var(--hd);margin:0 0 4px}
-nav button{font-size:13px;padding:9px 2px}
+nav{overflow-x:auto}
+nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
+.badge.gold{background:#fff3bf;color:#7a5b00}
 #stbody,#rbody{padding:24px 26px;background:#fff;color:var(--ink);border:1px solid var(--ln);border-radius:12px}
 @media print{body>*:not(#stmt):not(#rep){display:none!important}#stmt,#rep{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none;padding:0}#stbody,#rbody{border:0;border-radius:0;padding:36px 44px}.noprint{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -96,6 +98,7 @@ nav button{font-size:13px;padding:9px 2px}
     <button data-t="cob">Cobros</button>
     <button data-t="inv">Inventario</button>
     <button data-t="cli">Clientes</button>
+    <button data-t="loc">Locales</button>
     <button data-t="mas">Más</button>
   </nav>
 </div></header>
@@ -179,6 +182,11 @@ nav button{font-size:13px;padding:9px 2px}
     <label>Cliente</label><select id="cs"></select>
     <div id="cd"></div>
   </div>
+  <div class="card">
+    <h2>Pagos anulados</h2>
+    <div class="mu">Cada vez que quitas un pago queda aquí con su motivo, tu comentario y la foto, si la subiste.</div>
+    <div id="anlist" style="margin-top:6px"></div>
+  </div>
 </section>
 
 <!-- ============ INVENTARIO ============ -->
@@ -225,6 +233,49 @@ nav button{font-size:13px;padding:9px 2px}
 
   <h2>Inventario</h2>
   <div id="plist"></div>
+</section>
+
+<!-- ============ LOCALES ============ -->
+<section class="pane hide" id="t-loc">
+  <div class="card">
+    <h2>Mis locales</h2>
+    <div class="mu">La <b>casa madre</b> es tu inventario principal (el que ya tienes cargado). Desde ahí envías mercancía a las sucursales, y la casa madre autoriza cada envío.</div>
+    <div id="locl" style="margin-top:6px"></div>
+    <label>Nueva sucursal</label><input id="locn" placeholder="Ej: Local Centro">
+    <button class="btn go" id="locadd">Agregar sucursal</button>
+    <div class="msg" id="locmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Inventario por local</h2>
+    <div id="locinv" class="scroll"></div>
+  </div>
+
+  <div class="card">
+    <h2>Enviar mercancía</h2>
+    <div class="mu">Arma la lista y envíala a autorización. La existencia no se mueve hasta que se autorice.</div>
+    <div class="row">
+      <div><label>Desde</label><select id="tro"></select></div>
+      <div><label>Hacia</label><select id="trd"></select></div>
+    </div>
+    <div class="row">
+      <div><label>Producto</label><select id="trp"></select></div>
+      <div><label>Cantidad</label><input id="trq" type="number" min="1" step="1" value="1"></div>
+    </div>
+    <button class="btn sm" id="tradd" style="margin-top:10px">➕ Agregar a la lista</button>
+    <div id="trlista" style="margin-top:6px"></div>
+    <label>Nota (opcional)</label><input id="trn" maxlength="300">
+    <button class="btn go" id="trenv">Enviar a autorización</button>
+    <div class="msg" id="trmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Traslados</h2>
+    <h3 style="font:700 16px var(--hd);margin:8px 0 2px">Pendientes de autorización</h3>
+    <div id="trpend"></div>
+    <h3 style="font:700 16px var(--hd);margin:16px 0 2px">Recientes</h3>
+    <div id="trrec"></div>
+  </div>
 </section>
 
 <!-- ============ CLIENTES ============ -->
@@ -382,6 +433,25 @@ nav button{font-size:13px;padding:9px 2px}
   <button class="btn sm" id="cmx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
 </div></div>
 
+<div id="anpago" class="sheet hide"><div>
+  <h2>Anular pago</h2>
+  <div class="mu" id="anptx"></div>
+  <label>Motivo</label>
+  <select id="anpmot">
+    <option value="duplicado">Se duplicó el registro del pago</option>
+    <option value="no_pago">Lo marqué como pagado, pero el cliente no pagó</option>
+    <option value="monto">Monto o cliente equivocado</option>
+    <option value="otro">Otro motivo</option>
+  </select>
+  <label>Comentario (obligatorio)</label>
+  <textarea id="anpcom" rows="3" maxlength="300" placeholder="Explica qué pasó"></textarea>
+  <label>Foto que respalda la acción (opcional)</label>
+  <input id="anpfoto" type="file" accept="image/*">
+  <button class="btn" id="anpok" style="width:100%;background:#d64045">Anular pago</button>
+  <button class="btn sm" id="anpx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
+  <div class="msg err" id="anpmsg"></div>
+</div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -391,5 +461,6 @@ nav button{font-size:13px;padding:9px 2px}
 <script src="admin.js"></script>
 <script src="admin2.js"></script>
 <script src="admin3.js"></script>
+<script src="admin4.js"></script>
 </body>
 </html>

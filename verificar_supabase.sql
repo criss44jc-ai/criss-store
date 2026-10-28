@@ -19,4 +19,5 @@ select
   exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.proname = 'catalogo'
              and pg_get_function_result(p.oid) like '%precio%')                                as "supabase_v10.sql",
-  to_regclass('public.perfiles') is not null and to_regclass('public.premios') is not null   as "supabase_v11.sql";
+  to_regclass('public.perfiles') is not null and to_regclass('public.premios') is not null   as "supabase_v11.sql",
+  to_regclass('public.sucursales') is not null and to_regclass('public.anulaciones') is not null as "supabase_v12.sql";
