@@ -65,6 +65,8 @@ input[type=checkbox]{width:auto}
 .mtab th,.mtab td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--ln)}
 .mtab th:first-child,.mtab td:first-child{text-align:left}
 .scroll{overflow-x:auto}
+#vloc .mtab{font-size:12.5px}
+#vloc .mtab th,#vloc .mtab td{padding:7px 3px}
 .av{width:46px;height:46px;border-radius:50%;object-fit:cover;display:grid;place-items:center;font-size:24px;border:2px solid var(--ink);flex:none;overflow:hidden;color:#fff;font-weight:800}
 .av.g{width:88px;height:88px;font-size:46px}
 .rowc{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--ln);cursor:pointer}
@@ -152,6 +154,7 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
     <h2>Crear pedido para un cliente</h2>
     <div class="mu">Para cuando el cliente se olvidó de pedirlo. Descuenta del inventario y queda en su cuenta.</div>
     <label>Cliente</label><select id="npc"></select>
+    <label>Vende desde</label><select id="npl"></select>
     <label>Producto</label><select id="npp"></select>
     <div class="row">
       <div><label>Cantidad</label><input id="npq" type="number" min="1" step="1" value="1"></div>
@@ -232,7 +235,10 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
   </div>
 
   <h2>Inventario</h2>
-  <div id="plist"></div>
+  <div class="mu">La existencia que ves aquí es la de la casa madre (en Locales ves la de cada sucursal).</div>
+  <label>Generar los QR para vender desde:</label>
+  <select id="qrloc"><option value="">El local por defecto de la tienda</option></select>
+  <div id="plist" style="margin-top:10px"></div>
 </section>
 
 <!-- ============ LOCALES ============ -->
@@ -244,6 +250,20 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
     <label>Nueva sucursal</label><input id="locn" placeholder="Ej: Local Centro">
     <button class="btn go" id="locadd">Agregar sucursal</button>
     <div class="msg" id="locmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>¿De qué inventario sale la venta en línea?</h2>
+    <div class="mu">Cada local tiene su propio enlace y QR: lo que el cliente compra por ese enlace descuenta del inventario de ese local. El enlace general usa el local que elijas aquí.</div>
+    <label>Local por defecto de la tienda en línea</label><select id="lvs"></select>
+    <button class="btn go" id="lvsb">Guardar</button>
+    <div class="msg" id="lvmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ventas por local</h2>
+    <select id="vlp"><option value="hoy">Hoy</option><option value="mes" selected>Este mes</option><option value="todo">Todo el tiempo</option></select>
+    <div id="vloc" class="scroll" style="margin-top:8px"></div>
   </div>
 
   <div class="card">

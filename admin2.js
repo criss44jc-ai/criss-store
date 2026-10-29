@@ -85,7 +85,7 @@ async function loadUltimas() {
   const data = (r.data || []).filter(f => !f.historico).slice(0, 15);
   $('ult').innerHTML = data.length ? data.map(f => `
     <div class="line"><div><strong>${f.cantidad} × ${esc(f.producto_nombre)}</strong>
-      <div class="mu">${esc(nombreDe(f.cliente_id))} · ${fdate(f.fecha)} · ${f.pagada ? '<span class="paid">COBRADA</span>' : modTxt(f)}</div></div>
+      <div class="mu">${esc(nombreDe(f.cliente_id))}${typeof locales !== 'undefined' && locales.length > 1 && f.sucursal_id ? ' · 📍 ' + esc(nomLocal(f.sucursal_id)) : ''} · ${fdate(f.fecha)} · ${f.pagada ? '<span class="paid">COBRADA</span>' : modTxt(f)}</div></div>
       <div style="text-align:right"><strong>${money(f.monto)}</strong><br>
         ${f.pagada ? '' : `<button class="btn sm" style="margin:4px 4px 0 0" data-cm="${f.id}">Cambiar pago</button>`}<button class="btn sm red" style="margin-top:4px" data-anc="${f.id}" data-desc="${esc(f.cantidad + ' × ' + f.producto_nombre + ' de ' + nombreDe(f.cliente_id))}">Anular</button></div></div>`).join('') : '<div class="mu">Aún no hay ventas.</div>';
 }
@@ -293,6 +293,10 @@ async function openInforme() {
   const res = [['Pedidos', ventas.length], ['Unidades vendidas', unidades], ['Vendido', money(vendido)],
     ['Costo de lo vendido', money(costo)], ['Ganancia del día', money(vendido - costo)]];
   secs.push({ t: 'Ventas del día', l: res, nota: ventas.some(f => Number(f.costo_unit) === 0) && ventas.length ? 'Hay ventas sin costo cargado: la ganancia puede salir inflada.' : '' });
+  if (ventas.length && typeof locales !== 'undefined' && locales.length > 1) {
+    const pl = {}; ventas.forEach(f => { const id = f.sucursal_id || (madre() || {}).id; const r = pl[id] || (pl[id] = { n: 0, m: 0 }); r.n += f.cantidad; r.m += Number(f.monto); });
+    secs.push({ t: 'Ventas por local', l: Object.entries(pl).map(([id, r]) => [`${nomLocal(id)} (${r.n} u.)`, money(r.m)]) });
+  }
   if (ventas.length) {
     secs.push({ t: 'Productos vendidos', l: Object.entries(porProd).sort((x, y2) => y2[1].m - x[1].m).map(([n, v]) => [`${v.q} × ${n}`, money(v.m)]) });
     secs.push({ t: 'Clientes que compraron', l: Object.entries(porCli).map(([k, v]) => [`${nombreDe(k)}: ${v.it.join(', ')}`, money(v.m)]) });

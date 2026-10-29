@@ -1,5 +1,5 @@
 /* CRISS’ STORE · Administrador (parte 4): casa madre, sucursales y traslados con autorización */
-let locales = [], stockSuc = [], traslados = [], lineasTr = [];
+let locales = [], stockSuc = [], traslados = [], lineasTr = [], localVenta = '';
 const FALTA12 = '<div class="mu">Falta ejecutar supabase_v12.sql en Supabase.</div>';
 const madre = () => locales.find(l => l.es_madre);
 const nomLocal = id => (locales.find(l => l.id == id) || {}).nombre || 'Local ' + id;
@@ -9,24 +9,32 @@ const enSuc = (sid, pid) => { const r = stockSuc.find(x => x.sucursal_id == sid 
 const disponibleEn = (lid, pid) => { const m = madre(); return m && lid == m.id ? Number((prods.find(p => p.id == pid) || {}).stock || 0) : enSuc(lid, pid); };
 
 async function loadLocales() {
-  const [s, st, t] = await Promise.all([
+  const [s, st, t, lv] = await Promise.all([
     sb.from('sucursales').select('*').eq('activa', true).order('id'),
     sb.from('stock_sucursal').select('*'),
-    sb.from('traslados').select('*, traslado_items(producto_id, cantidad)').order('id', { ascending: false }).limit(40)
+    sb.from('traslados').select('*, traslado_items(producto_id, cantidad)').order('id', { ascending: false }).limit(40),
+    sb.from('ajustes').select('*').eq('clave', 'local_venta')
   ]);
   if (s.error) { $('locl').innerHTML = FALTA12; return; }
   locales = (s.data || []).sort((a, b) => (b.es_madre ? 1 : 0) - (a.es_madre ? 1 : 0) || a.id - b.id);
   stockSuc = st.data || []; traslados = t.data || [];
-  renderLocales(); renderInventarioLocales(); llenarTraslado(); renderTraslados();
+  localVenta = (lv.data && lv.data[0] && lv.data[0].valor) || '';
+  renderLocales(); renderInventarioLocales(); llenarTraslado(); renderTraslados(); llenarSelectorVenta(); loadVentasLocal();
 }
 
 /* ---------- Mis locales ---------- */
 function renderLocales() {
   $('locl').innerHTML = locales.map(l => `
-    <div class="line"><div><b>${esc(l.nombre)}</b> ${l.es_madre ? '<span class="badge gold">Casa madre</span>' : '<span class="badge">Sucursal</span>'}</div>
+    <div class="line" style="align-items:flex-start"><div><b>${esc(l.nombre)}</b> ${l.es_madre ? '<span class="badge gold">Casa madre</span>' : '<span class="badge">Sucursal</span>'}
+        ${String(localVenta) === String(l.id) || (!localVenta && l.es_madre) ? '<span class="badge ok">Vende en línea por defecto</span>' : ''}
+        <div class="mu" style="word-break:break-all;margin-top:2px">Enlace de venta: ${esc(urlLocal(l.id))}</div>
+        <button class="btn sm" style="margin-top:4px" data-cpl="${esc(urlLocal(l.id))}">Copiar enlace</button></div>
       <div style="display:flex;gap:6px"><button class="btn sm" data-ren="${l.id}">Renombrar</button>${l.es_madre ? '' : `<button class="btn sm red" data-qui="${l.id}">Quitar</button>`}</div></div>`).join('');
 }
+const urlLocal = id => location.origin + '/?l=' + id;
 $('locl').onclick = async e => {
+  const cp = e.target.closest('[data-cpl]');
+  if (cp) { try { await navigator.clipboard.writeText(cp.dataset.cpl); cp.textContent = 'Copiado ✓'; } catch (err) { cp.textContent = 'No se pudo copiar'; } setTimeout(() => cp.textContent = 'Copiar enlace', 1800); return; }
   const r = e.target.closest('[data-ren]'), q = e.target.closest('[data-qui]');
   if (r) {
     const l = locales.find(x => x.id == r.dataset.ren), n = prompt('Nuevo nombre:', l.nombre);
@@ -61,7 +69,7 @@ function renderInventarioLocales() {
       const v = sucs.map(s => enSuc(s.id, p.id)), tot = Number(p.stock) + v.reduce((a, b) => a + b, 0);
       return `<tr><td>${esc(p.nombre)}</td><td>${p.stock}</td>${v.map(x => `<td>${x}</td>`).join('')}<td><b>${tot}</b></td></tr>`;
     }).join('') + '</table>' +
-    '<div class="mu" style="margin-top:8px">La tienda en línea descuenta de la casa madre. Total = suma de todos los locales.</div>';
+    '<div class="mu" style="margin-top:8px">Cada venta descuenta del local por cuyo enlace o QR compró el cliente. Total = suma de todos los locales.</div>';
 }
 
 /* ---------- Nuevo traslado ---------- */
@@ -137,3 +145,48 @@ $('trpend').onclick = async e => {
     loadLocales();
   }
 };
+
+/* ---------- ¿De qué local sale la venta? ---------- */
+function llenarSelectorVenta() {
+  const o = locales.map(l => `<option value="${l.id}">${esc(l.nombre)}</option>`).join(''), m = madre();
+  const porDefecto = localVenta && locales.some(l => l.id == localVenta) ? localVenta : (m ? m.id : '');
+  $('lvs').innerHTML = o; $('lvs').value = porDefecto;
+  const vn = $('npl').value;
+  $('npl').innerHTML = o; $('npl').value = vn && locales.some(l => l.id == vn) ? vn : porDefecto;
+  const vq = $('qrloc').value;
+  $('qrloc').innerHTML = '<option value="">El local por defecto de la tienda</option>' + o;
+  $('qrloc').value = vq && locales.some(l => l.id == vq) ? vq : '';
+  llenarProductosPedido();
+  if (typeof renderProds === 'function') renderProds();
+}
+function llenarProductosPedido() {
+  const lid = $('npl').value || (madre() ? madre().id : ''), v = $('npp').value;
+  $('npp').innerHTML = prods.filter(p => disponibleEn(lid, p.id) > 0)
+    .map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${disponibleEn(lid, p.id)}) · ${money(p.precio)}</option>`).join('');
+  if (v) $('npp').value = v;
+}
+$('npl').onchange = llenarProductosPedido;
+$('lvsb').onclick = async () => {
+  const { error } = await sb.from('ajustes').upsert({ clave: 'local_venta', valor: String($('lvs').value) });
+  if (error) { say('lvmsg', 'No se pudo guardar: ' + error.message, true); return; }
+  localVenta = String($('lvs').value); ajustes.local_venta = localVenta;
+  say('lvmsg', `Listo. El enlace general de la tienda ahora vende desde ${nomLocal(localVenta)}.`); renderLocales();
+};
+
+/* ---------- Ventas por local ---------- */
+function desdeVentas() {
+  const n = new Date(), v = $('vlp').value;
+  if (v === 'hoy') return new Date(n.getFullYear(), n.getMonth(), n.getDate()).toISOString();
+  if (v === 'mes') return new Date(n.getFullYear(), n.getMonth(), 1).toISOString();
+  return null;
+}
+async function loadVentasLocal() {
+  const { data, error } = await sb.rpc('ventas_por_local', { p_desde: desdeVentas() });
+  if (error) { $('vloc').innerHTML = '<div class="mu">Falta ejecutar supabase_v13.sql en Supabase.</div>'; return; }
+  const f = data || [], suma = k => f.reduce((s, x) => s + Number(x[k]), 0);
+  $('vloc').innerHTML = `<table class="mtab"><tr><th>Local</th><th>Pedidos</th><th>Unid.</th><th>Ventas</th><th>Ganancia</th><th>Por cobrar</th></tr>` +
+    f.map(x => `<tr><td>${esc(x.nombre)}${x.es_madre ? ' 🏠' : ''}</td><td>${x.pedidos}</td><td>${x.unidades}</td><td>${money(x.ventas)}</td><td><b>${money(x.ganancia)}</b></td><td>${money(x.por_cobrar)}</td></tr>`).join('') +
+    `<tr><td><b>Total</b></td><td><b>${suma('pedidos')}</b></td><td><b>${suma('unidades')}</b></td><td><b>${money(suma('ventas'))}</b></td><td><b>${money(suma('ganancia'))}</b></td><td><b>${money(suma('por_cobrar'))}</b></td></tr></table>` +
+    '<div class="mu" style="margin-top:8px">No incluye los pedidos anteriores al sistema.</div>';
+}
+$('vlp').onchange = loadVentasLocal;

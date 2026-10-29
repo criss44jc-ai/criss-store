@@ -37,6 +37,7 @@ async function loadAll() {
   ]);
   clientes = cl.data || []; prods = p.data || []; pend = c.data || [];
   fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas(); loadComps(); loadAnulaciones();
+  if (typeof loadLocales === 'function') loadLocales();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
 }
@@ -96,8 +97,15 @@ function renderProdSelect() {
   const w = $('npp').value;
   $('npp').innerHTML = prods.filter(p => p.stock > 0).map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${p.stock}) · ${money(p.precio)}</option>`).join('');
   if (w) $('npp').value = w;
+  if (typeof llenarProductosPedido === 'function' && typeof locales !== 'undefined' && locales.length) llenarProductosPedido();
   $('hprl').innerHTML = prods.map(p => `<option value="${esc(p.nombre)}">`).join('');
 }
+// QR del producto: con el local elegido, lo que se compre sale del inventario de ese local
+function urlQr(codigo) {
+  const l = $('qrloc') ? $('qrloc').value : '';
+  return location.origin + '/?p=' + codigo + (l ? '&l=' + l : '');
+}
+$('qrloc').onchange = () => renderProds();
 function renderProds() {
   const L = $('plist');
   if (!prods.length) { L.innerHTML = '<div class="mu">Aún no hay productos. Carga el primero arriba.</div>'; return; }
@@ -125,7 +133,7 @@ function renderProds() {
     </div>`;
   }).join('');
   prods.forEach(p => {
-    try { new QRCode($('qr-' + p.id), { text: location.origin + '/?p=' + p.codigo, width: 110, height: 110 }); } catch (e) {}
+    try { new QRCode($('qr-' + p.id), { text: urlQr(p.codigo), width: 110, height: 110 }); } catch (e) {}
   });
 }
 document.addEventListener('click', async e => {
@@ -464,12 +472,12 @@ $('npadd').onclick = async () => {
   const c = $('npc').value, p = prods.find(x => x.id == $('npp').value), q = parseInt($('npq').value, 10);
   if (!c || !p || !(q > 0)) { say('npmsg', 'Elige el cliente, el producto y la cantidad.', true); return; }
   $('npadd').disabled = true;
-  const { data, error } = await sb.rpc('registrar_compra', { p_cliente: c, p_codigo: p.codigo, p_cantidad: q, p_modalidad: $('npmod').value });
+  const { data, error } = await sb.rpc('registrar_compra', { p_cliente: c, p_codigo: p.codigo, p_cantidad: q, p_modalidad: $('npmod').value, p_sucursal: Number($('npl').value) || null });
   $('npadd').disabled = false;
   if (error) { say('npmsg', error.message, true); return; }
   $('npq').value = 1;
   await loadAll();
-  say('npmsg', `Pedido creado: ${q} × ${p.nombre} para ${nombreDe(c)} (${data.factura}).`);
+  say('npmsg', `Pedido creado: ${q} × ${p.nombre} para ${nombreDe(c)} (${data.factura})` + (typeof locales !== 'undefined' && locales.length > 1 && $('npl').value ? ` · salió de ${nomLocal($('npl').value)}.` : '.'));
 };
 
 /* ---------- Cambiar la foto de un producto ---------- */

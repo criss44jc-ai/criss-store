@@ -14,7 +14,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v12.sql` | La base de datos, en 12 partes |
+| `supabase.sql` a `supabase_v13.sql` | La base de datos, en 13 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con doce columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con trece columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las doce columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las trece columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -83,7 +83,11 @@ En `/admin.html` → **Locales**:
 - La **casa madre** es el inventario que ya tienes. Puedes cambiarle el nombre, y agregar y renombrar las sucursales que quieras.
 - **Inventario por local:** una tabla con la existencia de cada producto en la casa madre, en cada sucursal y el total.
 - **Enviar mercancía:** eliges desde dónde y hacia dónde, armas la lista de productos y cantidades, y la envías a autorización. **La existencia no se mueve hasta que la casa madre pulsa Autorizar.** También puede rechazarse, con un motivo. Con esto también puedes devolver mercancía a la casa madre.
-- La tienda en línea descuenta de la casa madre.
+- **¿De qué local sale cada venta?** Cada local tiene su **propio enlace de venta** (se ve en Locales, con botón para copiarlo). Lo que el cliente compre por ese enlace descuenta del inventario de ese local, y la tienda le muestra solo lo que hay allí, con el nombre del local arriba. El enlace general usa el **local por defecto** que elijas en Locales.
+- **QR por local:** en Inventario eliges "Generar los QR para vender desde" y cada QR del producto lleva el local.
+- **Pedido desde el panel:** al crear un pedido para un cliente eliges de qué local sale.
+- **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
+- Si anulas un pedido, la mercancía vuelve al local de donde salió.
 
 ## Anular un pago
 

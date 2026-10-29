@@ -83,7 +83,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <header><div class="bar">
   <div class="brand">
     <img class="logo" src="mascota.png" alt="Mascota de CRISS’ STORE">
-    <div><h1>CRISS’ STORE</h1><div class="slogan">¡Come sin remordimientos! 😋</div></div>
+    <div><h1>CRISS’ STORE</h1><div class="slogan">¡Come sin remordimientos! 😋</div><div class="slogan hide" id="localtag"></div></div>
   </div>
   <a class="adm" href="admin.html">Administrador</a>
 </div></header>
@@ -162,6 +162,12 @@ const say = (id, t, err) => { const e = $(id); e.textContent = t; e.classList.to
 const codeOf = t => { const r = /P-\d+/i.exec(String(t)); return r ? r[0].toUpperCase() : null; };
 const ddmm = d => d.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
 const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+let LOCAL = (() => { const v = parseInt(new URLSearchParams(location.search).get('l'), 10); return v > 0 ? v : null; })();
+async function loadLocalTienda() {
+  const { data } = await sb.rpc('local_tienda', { p_local: LOCAL });
+  const l = data && data[0], tag = $('localtag');
+  if (l && l.varios) { tag.textContent = '📍 ' + l.nombre; tag.classList.remove('hide'); } else tag.classList.add('hide');
+}
 
 let clientes = [], cat = [], cur = null, qty = 1, stream = null, timer = null;
 
@@ -194,7 +200,7 @@ $('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value);
 
 /* ---------- Catálogo y promociones ---------- */
 async function loadCatalog() {
-  const { data, error } = await sb.rpc('catalogo');
+  const { data, error } = await sb.rpc('catalogo', { p_sucursal: LOCAL });
   if (error) { say('bm', 'No se pudo cargar el catálogo. Revisa config.js.', true); return; }
   cat = data || [];
   $('cat').innerHTML = cat.length ? cat.map(p => `
@@ -263,7 +269,7 @@ $('sok').onclick = async () => {
   if (!cur) return;
   const mod = (document.querySelector('input[name=mod]:checked') || {}).value || 'inmediato';
   $('sok').disabled = true;
-  const { data, error } = await sb.rpc('registrar_compra', { p_cliente: $('cl').value, p_codigo: cur.codigo, p_cantidad: qty, p_modalidad: mod });
+  const { data, error } = await sb.rpc('registrar_compra', { p_cliente: $('cl').value, p_codigo: cur.codigo, p_cantidad: qty, p_modalidad: mod, p_sucursal: LOCAL });
   $('sok').disabled = false;
   const prod = cur, nombre = cur.nombre, n = qty;
   closeSheet();
@@ -364,7 +370,14 @@ $('scan').onclick = async () => {
     timer = setInterval(async () => {
       try {
         const r = await det.detect(v);
-        if (r.length) { const c = codeOf(r[0].rawValue); if (c) { stopScan(); openSheet(c); } }
+        if (r.length) {
+          const c = codeOf(r[0].rawValue); const lm = /[?&]l=(\d+)/.exec(r[0].rawValue || '');
+          if (c) {
+            stopScan();
+            if (lm && Number(lm[1]) !== LOCAL) { LOCAL = Number(lm[1]); await Promise.all([loadCatalog(), loadLocalTienda()]); }
+            openSheet(c);
+          }
+        }
       } catch (e) {}
     }, 300);
   } catch (e) { stopScan(); say('bm', 'No se pudo abrir la cámara. Toca el producto en la lista.', true); }
@@ -523,7 +536,7 @@ let modoInicial = 'animada';
 try { modoInicial = modoValido(localStorage.getItem('mascotaModo')); } catch (e) {}
 montarMascota(modoInicial);
 (async () => {
-  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota()]);
+  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota(), loadLocalTienda()]);
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
   saludo();
