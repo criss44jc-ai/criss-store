@@ -234,6 +234,13 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
     <div class="msg" id="pmsg"></div>
   </div>
 
+  <div class="card">
+    <h2>Pérdidas de inventario</h2>
+    <div class="mu">Para dar de baja mercancía que se perdió: robos, desaparecidos, daños o vencidos. Descuenta del inventario del local y queda registrado.</div>
+    <button class="btn" id="peabrir" style="background:#d64045">Registrar una pérdida</button>
+    <div id="pehist" style="margin-top:10px"></div>
+  </div>
+
   <h2>Inventario</h2>
   <div class="mu">La existencia que ves aquí es la de la casa madre (en Locales ves la de cada sucursal).</div>
   <label>Generar los QR para vender desde:</label>
@@ -453,6 +460,32 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
   <button class="btn sm" id="cmx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
 </div></div>
 
+<div id="perdida" class="sheet hide"><div>
+  <h2>Registrar pérdida</h2>
+  <div class="mu">La mercancía sale del inventario y se cuenta como pérdida.</div>
+  <label>Local</label><select id="pe-loc"></select>
+  <label>Producto</label><select id="pe-prod"></select>
+  <div class="row">
+    <div><label>Cantidad perdida</label><input id="pe-qty" type="number" min="1" step="1" value="1"></div>
+    <div><label>Valor al costo</label><div id="pe-val" class="total" style="padding-top:6px">$0.00</div></div>
+  </div>
+  <label>Motivo</label>
+  <select id="pe-mot">
+    <option value="robo">Robo</option>
+    <option value="desaparecido">Desaparecido (no sé dónde quedó)</option>
+    <option value="danado">Dañado</option>
+    <option value="vencido">Vencido</option>
+    <option value="otro">Otro motivo</option>
+  </select>
+  <label>Comentario (obligatorio)</label>
+  <textarea id="pe-com" rows="3" maxlength="300" placeholder="Cuenta qué pasó: cuándo, dónde, quién se dio cuenta…"></textarea>
+  <label>Foto que lo respalda (opcional)</label>
+  <input id="pe-foto" type="file" accept="image/*">
+  <button class="btn" id="pe-ok" style="width:100%;background:#d64045">Dar de baja como pérdida</button>
+  <button class="btn sm" id="pe-x" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
+  <div class="msg err" id="pe-msg"></div>
+</div></div>
+
 <div id="anpago" class="sheet hide"><div>
   <h2>Anular pago</h2>
   <div class="mu" id="anptx"></div>
@@ -482,5 +515,6 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
 <script src="admin2.js"></script>
 <script src="admin3.js"></script>
 <script src="admin4.js"></script>
+<script src="admin5.js"></script>
 </body>
 </html>

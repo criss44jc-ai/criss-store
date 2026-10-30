@@ -38,6 +38,7 @@ async function loadAll() {
   clientes = cl.data || []; prods = p.data || []; pend = c.data || [];
   fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas(); loadComps(); loadAnulaciones();
   if (typeof loadLocales === 'function') loadLocales();
+  if (typeof loadPerdidas === 'function') loadPerdidas();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
 }
@@ -126,6 +127,7 @@ function renderProds() {
           <button class="btn sm" data-rep="${p.id}">Comprar a proveedor</button>
           <button class="btn sm" data-pr="${p.id}">Cambiar precio</button>
           <label class="btn sm" style="cursor:pointer;margin:0;display:inline-block">Cambiar foto<input type="file" accept="image/*" hidden data-img="${p.id}"></label>
+          <button class="btn sm red" data-pe="${p.id}">Pérdida</button>
           <button class="btn sm red" data-del="${p.id}">Quitar</button>
         </div>
         <div class="qr" id="qr-${p.id}"></div>

@@ -148,10 +148,10 @@ function renderGanancias({ data, error }) {
 function renderMensual({ data, error }) {
   if (error) { $('mout').innerHTML = FALTA; return; }
   if (!data || !data.length) { $('mout').innerHTML = '<div class="mu">Aún no hay movimientos.</div>'; return; }
-  $('mout').innerHTML = `<table class="mtab"><tr><th>Mes</th><th>Ventas</th><th>Costo vendido</th><th>Ganancia</th><th>Compras prov.</th><th>Cobrado</th></tr>` +
+  $('mout').innerHTML = `<table class="mtab"><tr><th>Mes</th><th>Ventas</th><th>Costo vendido</th><th>Ganancia</th><th>Pérdidas</th><th>Compras prov.</th><th>Cobrado</th></tr>` +
     data.map(r => `<tr><td>${new Date(r.mes + 'T00:00:00').toLocaleDateString('es', { month: 'short', year: '2-digit' })}</td>
-      <td>${money(r.ventas)}</td><td>${money(r.costo_vendido)}</td><td><b>${money(r.ganancia)}</b></td><td>${money(r.gastos)}</td><td>${money(r.cobrado)}</td></tr>`).join('') +
-    `</table><div class="mu" style="margin-top:8px">Ganancia = ventas − costo de lo vendido. “Compras prov.” es lo que pagaste a proveedores ese mes (incluye inventario que aún no vendes). “Cobrado” es el dinero que recibiste de clientes.</div>`;
+      <td>${money(r.ventas)}</td><td>${money(r.costo_vendido)}</td><td><b>${money(r.ganancia)}</b></td><td>${Number(r.perdidas || 0) > 0 ? '<span class="low">' + money(r.perdidas) + '</span>' : money(0)}</td><td>${money(r.gastos)}</td><td>${money(r.cobrado)}</td></tr>`).join('') +
+    `</table><div class="mu" style="margin-top:8px">Ganancia = ventas − costo de lo vendido. “Pérdidas” es el costo de la mercancía que diste de baja (robos, desaparecidos, daños); réstala de tu ganancia para ver lo que realmente te quedó. “Compras prov.” es lo que pagaste a proveedores ese mes (incluye inventario que aún no vendes). “Cobrado” es el dinero que recibiste de clientes.</div>`;
 }
 function renderKpis(rm) {
   const hoy = hoyISO(), mes = hoy.slice(0, 7);
@@ -161,7 +161,8 @@ function renderKpis(rm) {
   $('kpis').innerHTML = [
     ['Por cobrar', money(porCobrar)], ['Vencido', money(vencido)],
     ['Ganancia del mes', rm.error ? '—' : money(fila ? fila.ganancia : 0)],
-    ['Compras a proveedor (mes)', rm.error ? '—' : money(fila ? fila.gastos : 0)]
+    ['Compras a proveedor (mes)', rm.error ? '—' : money(fila ? fila.gastos : 0)],
+    ['Pérdidas del mes', rm.error ? '—' : money(fila ? (fila.perdidas || 0) : 0)]
   ].map(([k, v]) => `<div class="kpi"><b>${v}</b><span>${k}</span></div>`).join('');
 }
 
@@ -271,8 +272,8 @@ async function openInforme() {
   const [y, m, d] = dia.split('-').map(Number);
   const ini = new Date(y, m - 1, d).toISOString(), fin = new Date(y, m - 1, d + 1).toISOString();
   const rng = q => q.gte('fecha', ini).lt('fecha', fin).order('id');
-  const [a, b, c] = await Promise.all([
-    rng(sb.from('compras').select('*')), rng(sb.from('pagos').select('*')), rng(sb.from('entradas').select('*'))
+  const [a, b, c, pe] = await Promise.all([
+    rng(sb.from('compras').select('*')), rng(sb.from('pagos').select('*')), rng(sb.from('entradas').select('*')), rng(sb.from('perdidas').select('*'))
   ]);
   const ventas = (a.data || []).filter(f => !f.historico), pagos = b.data || [], ent = c.data || [];
 
@@ -304,6 +305,9 @@ async function openInforme() {
   }
   secs.push({ t: 'Cobros del día', l: pagos.length ? [['Total cobrado', money(cobrado)], ...Object.entries(porMet).map(([k, v]) => ['· ' + k, money(v)]),
     ...pagos.map(p => [`${nombreDe(p.cliente_id)} (${p.metodo})`, money(p.monto)])] : [['Sin cobros este día', '']] });
+  const perd = (pe && pe.data) || [];
+  if (perd.length) secs.push({ t: 'Pérdidas de inventario', l: [['Valor al costo', money(sumar(perd, x => x.cantidad * x.costo_unit))],
+    ...perd.map(x => [`${x.cantidad} × ${x.producto_nombre} · ${({ robo: 'robo', desaparecido: 'desaparecido', danado: 'dañado', vencido: 'vencido', otro: 'otro' })[x.motivo] || x.motivo}`, money(x.cantidad * x.costo_unit)])] });
   if (ent.length) secs.push({ t: 'Compras a proveedor', l: [['Total pagado', money(gastos)], ...ent.map(e => [`${e.cantidad} × ${e.producto_nombre}${e.proveedor ? ' · ' + e.proveedor : ''}`, money(e.costo_total)])] });
   secs.push({ t: 'Situación actual', l: [['Por cobrar (todos)', money(porCobrar)], ['Vencido', money(vencido)],
     ['Por agotarse', bajos.length ? bajos.map(p => `${p.nombre} (${p.stock})`).join(', ') : 'Nada']] });
