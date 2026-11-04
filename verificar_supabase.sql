@@ -23,4 +23,6 @@ select
   to_regclass('public.sucursales') is not null and to_regclass('public.anulaciones') is not null as "supabase_v12.sql",
   exists (select 1 from information_schema.columns
            where table_schema = 'public' and table_name = 'compras' and column_name = 'sucursal_id') as "supabase_v13.sql",
-  to_regclass('public.perdidas') is not null                                               as "supabase_v14.sql";
+  to_regclass('public.perdidas') is not null                                               as "supabase_v14.sql",
+  to_regclass('public.movimientos_stock') is not null                                      as "supabase_v15.sql",
+  to_regclass('public.buzon') is not null and to_regclass('public.grupos') is not null     as "supabase_v16.sql";

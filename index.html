@@ -60,6 +60,15 @@ input[type=text],input[type=file]{width:100%;padding:11px;border:1px solid var(-
 #pyqr{display:block;width:100%;max-width:260px;margin:10px auto;border-radius:12px;border:1px solid var(--ln)}
 #pytx{white-space:pre-line;background:#f4f6f9;border-radius:10px;padding:10px 12px;margin:8px 0}
 .tile .pr{padding:0 10px 10px;font:800 17px var(--hd);color:var(--ok)}
+header,.adm{color:var(--hdtx,var(--ink))}
+.logo.libre{border-radius:16px;background:#fff;object-fit:contain;border-color:rgba(0,0,0,.18)}
+#portada img{width:100%;max-height:200px;object-fit:cover;display:block}
+.strip{position:relative}
+.promo video,.promo iframe{width:100%;aspect-ratio:16/10;display:block;border:0;background:#000;object-fit:cover}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px}
+.chip{flex:none;padding:8px 14px;border:1px solid var(--ln);background:#fff;border-radius:99px;font:700 14px var(--tx);cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+textarea{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;background:#fff;color:var(--ink);font:16px var(--tx);margin-top:8px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover;flex:none}
 .slogan{font-weight:700;font-size:14px;margin-top:4px}
@@ -82,11 +91,12 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <body>
 <header><div class="bar">
   <div class="brand">
-    <img class="logo" src="mascota.png" alt="Mascota de CRISS’ STORE">
-    <div><h1>CRISS’ STORE</h1><div class="slogan">¡Come sin remordimientos! 😋</div><div class="slogan hide" id="localtag"></div></div>
+    <img class="logo" id="logo" src="mascota.png" alt="Logo de la tienda">
+    <div><h1 id="ttl">CRISS’ STORE</h1><div class="slogan" id="slg">¡Come sin remordimientos! 😋</div><div class="slogan hide" id="localtag"></div></div>
   </div>
   <a class="adm" href="admin.html">Administrador</a>
 </div></header>
+<div id="portada" class="hide"><img alt=""></div>
 
 <main>
   <div class="card">
@@ -103,6 +113,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
   </div>
 
   <h2>Elige tu producto</h2>
+  <div class="chips hide" id="chips"></div>
   <div class="tiles" id="cat"></div>
 
   <div class="card" style="margin-top:14px">
@@ -110,7 +121,24 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
     <div id="acc" class="mu">Elige tu nombre para ver tu cuenta.</div>
     <button class="btn go hide" id="paybtn" style="width:100%">Pagar ahora (Yappy o cuenta)</button>
   </div>
+
+  <div class="card">
+    <h2>💬 Sugerencias y reclamos</h2>
+    <div class="mu">¿Algo que mejorar o algo que salió mal? Cuéntanos y llegará directo al administrador.</div>
+    <button class="btn" id="bzabrir" style="width:100%">Escribir un mensaje</button>
+  </div>
 </main>
+
+<div id="bzsheet" class="sheet hide"><div>
+  <h2>💬 Sugerencias y reclamos</h2>
+  <label class="opt"><input type="radio" name="bzt" value="sugerencia" checked> 💡 Sugerencia</label>
+  <label class="opt"><input type="radio" name="bzt" value="reclamo"> ⚠️ Reclamo</label>
+  <textarea id="bztxt" rows="4" maxlength="1000" placeholder="Escribe aquí tu mensaje…"></textarea>
+  <input type="text" id="bzcon" maxlength="120" placeholder="Teléfono o correo para responderte (opcional)" style="margin-top:8px">
+  <button class="btn go" id="bzok" style="width:100%">Enviar</button>
+  <button class="btn sm" id="bzx" style="width:100%;margin-top:8px;padding:11px">Cerrar</button>
+  <div class="msg" id="bzst"></div>
+</div></div>
 
 <div id="paysheet" class="sheet hide"><div>
   <h2>Paga ahora 💸</h2>
@@ -163,10 +191,28 @@ const codeOf = t => { const r = /P-\d+/i.exec(String(t)); return r ? r[0].toUppe
 const ddmm = d => d.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
 const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 let LOCAL = (() => { const v = parseInt(new URLSearchParams(location.search).get('l'), 10); return v > 0 ? v : null; })();
+let LOCINFO = null;
+function aplicarMarca(l) {
+  const r = document.documentElement.style, hex = c => /^#[0-9a-f]{6}$/i.test(c || '') ? c : null;
+  const enc = hex(l && l.color_encabezado), acc = hex(l && l.color_acento);
+  const luz = c => { const n = parseInt(c.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
+  if (enc) { r.setProperty('--ban', enc); r.setProperty('--hdtx', luz(enc) > 0.6 ? '#12263a' : '#ffffff'); } else { r.removeProperty('--ban'); r.removeProperty('--hdtx'); }
+  if (acc) r.setProperty('--ok', acc); else r.removeProperty('--ok');
+  const titulo = (l && l.titulo) || 'CRISS’ STORE';
+  $('ttl').textContent = titulo; document.title = titulo;
+  $('slg').textContent = (l && l.eslogan) || '¡Come sin remordimientos! 😋';
+  const lg = $('logo');
+  if (l && l.logo_url) { lg.src = l.logo_url; lg.classList.add('libre'); } else { lg.src = 'mascota.png'; lg.classList.remove('libre'); }
+  const pt = $('portada');
+  if (l && l.portada_url) { pt.querySelector('img').src = l.portada_url; pt.classList.remove('hide'); } else pt.classList.add('hide');
+}
 async function loadLocalTienda() {
   const { data } = await sb.rpc('local_tienda', { p_local: LOCAL });
   const l = data && data[0], tag = $('localtag');
+  LOCINFO = l || null;
   if (l && l.varios) { tag.textContent = '📍 ' + l.nombre; tag.classList.remove('hide'); } else tag.classList.add('hide');
+  aplicarMarca(l);
+  try { localStorage.setItem('marca_' + (LOCAL || 0), JSON.stringify(l || null)); } catch (e) {}
 }
 
 let clientes = [], cat = [], cur = null, qty = 1, stream = null, timer = null;
@@ -199,11 +245,24 @@ async function loadAccount() {
 $('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value); } catch (e) {} say('bm', ''); loadAccount(); tipCliente(); };
 
 /* ---------- Catálogo y promociones ---------- */
+let grupoSel = '';
 async function loadCatalog() {
   const { data, error } = await sb.rpc('catalogo', { p_sucursal: LOCAL });
   if (error) { say('bm', 'No se pudo cargar el catálogo. Revisa config.js.', true); return; }
   cat = data || [];
-  $('cat').innerHTML = cat.length ? cat.map(p => `
+  renderCatalogo();
+}
+function renderCatalogo() {
+  const grupos = [...new Set(cat.filter(p => p.grupo).sort((a, b) => (a.grupo_orden || 0) - (b.grupo_orden || 0) || a.grupo.localeCompare(b.grupo)).map(p => p.grupo))];
+  const ch = $('chips');
+  if (grupos.length) {
+    const opts = ['', ...grupos, ...(cat.some(p => !p.grupo) ? ['__otros'] : [])];
+    if (!opts.includes(grupoSel)) grupoSel = '';
+    ch.innerHTML = opts.map(g => `<button class="chip ${g === grupoSel ? 'on' : ''}" data-g="${esc(g)}">${g === '' ? 'Todos' : g === '__otros' ? 'Otros' : esc(g)}</button>`).join('');
+    ch.classList.remove('hide');
+  } else { ch.classList.add('hide'); grupoSel = ''; }
+  const lista = cat.filter(p => !grupoSel || (grupoSel === '__otros' ? !p.grupo : p.grupo === grupoSel));
+  $('cat').innerHTML = lista.length ? lista.map(p => `
     <button class="tile" data-c="${esc(p.codigo)}" ${p.disponible ? '' : 'disabled'}>
       ${p.disponible ? '' : '<span class="tag">Agotado</span>'}
       ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="" loading="lazy">` : '<div class="ph">🛍️</div>'}
@@ -212,21 +271,48 @@ async function loadCatalog() {
       ${p.precio != null ? `<span class="pr">${money(p.precio)}</span>` : ''}
     </button>`).join('') : '<div class="mu">Todavía no hay productos.</div>';
 }
+$('chips').onclick = e => { const b = e.target.closest('[data-g]'); if (b) { grupoSel = b.dataset.g; renderCatalogo(); } };
 $('cat').onclick = e => { const b = e.target.closest('.tile'); if (b && !b.disabled) openSheet(b.dataset.c); };
 
+const ytId = u => { const m = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/.exec(u || ''); return m ? m[1] : null; };
+let promoTimer = null, promoPausa = 0, promoObs = null;
 async function loadPromos() {
-  const { data, error } = await sb.from('promos').select('titulo,texto,imagen_url,codigo')
-    .eq('activa', true).order('id', { ascending: false }).limit(10);
-  if (error || !data || !data.length) { $('promos').classList.add('hide'); return; }
+  const lid = LOCINFO ? LOCINFO.id : LOCAL;
+  let q = sb.from('promos').select('titulo,texto,imagen_url,codigo,video_url,video_externo,sucursal_id').eq('activa', true);
+  if (lid) q = q.or(`sucursal_id.is.null,sucursal_id.eq.${lid}`);
+  let { data, error } = await q.order('id', { ascending: false }).limit(12);
+  if (error) ({ data, error } = await sb.from('promos').select('titulo,texto,imagen_url,codigo').eq('activa', true).order('id', { ascending: false }).limit(12));
+  if (error || !data || !data.length) { $('promos').classList.add('hide'); clearInterval(promoTimer); return; }
   $('promos').classList.remove('hide');
-  $('pstrip').innerHTML = data.map(p => `
-    <button class="promo" ${p.codigo ? `data-c="${esc(p.codigo)}"` : ''}>
-      ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="" loading="lazy">` : ''}
-      <span class="t">${esc(p.titulo)}</span>
-      <span class="d">${esc(p.texto || '')}</span>
-    </button>`).join('');
+  $('pstrip').innerHTML = data.map(p => {
+    const yt = ytId(p.video_externo);
+    const media = p.video_url ? `<video src="${esc(p.video_url)}" muted loop playsinline controls preload="metadata"></video>`
+      : yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${yt}?playsinline=1&rel=0" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy" title="${esc(p.titulo)}"></iframe>`
+      : p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="" loading="lazy">` : '';
+    return `<div class="promo" ${p.codigo ? `data-c="${esc(p.codigo)}"` : ''}>${media}<span class="t">${esc(p.titulo)}</span><span class="d">${esc(p.texto || '')}</span></div>`;
+  }).join('');
+  // los videos subidos se reproducen (sin sonido) solo cuando se ven
+  if (promoObs) promoObs.disconnect();
+  if ('IntersectionObserver' in window) {
+    promoObs = new IntersectionObserver(es => es.forEach(en => { const v = en.target; if (en.isIntersecting) v.play().catch(() => {}); else v.pause(); }), { threshold: 0.5 });
+    $('pstrip').querySelectorAll('video').forEach(v => promoObs.observe(v));
+  }
+  autoPromos();
 }
-$('pstrip').onclick = e => { const b = e.target.closest('.promo'); if (b && b.dataset.c) openSheet(b.dataset.c); };
+// si hay varias promociones, pasan solas cada pocos segundos (se detienen si el cliente las toca)
+function autoPromos() {
+  clearInterval(promoTimer);
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  promoTimer = setInterval(() => {
+    const st = $('pstrip');
+    if (Date.now() < promoPausa || document.hidden || st.scrollWidth <= st.clientWidth + 8) return;
+    const sig = [...st.children].find(c => c.offsetLeft > st.scrollLeft + 8);
+    if (!sig || st.scrollLeft + st.clientWidth >= st.scrollWidth - 4) st.scrollTo({ left: 0, behavior: 'smooth' });
+    else st.scrollTo({ left: sig.offsetLeft, behavior: 'smooth' });
+  }, 4500);
+}
+['pointerdown', 'touchstart', 'wheel'].forEach(ev => $('pstrip').addEventListener(ev, () => { promoPausa = Date.now() + 12000; }, { passive: true }));
+$('pstrip').onclick = e => { if (e.target.closest('video,iframe')) return; const b = e.target.closest('.promo'); if (b && b.dataset.c) openSheet(b.dataset.c); };
 
 /* ---------- Retiro con modalidad de pago ---------- */
 function renderMods() {
@@ -374,7 +460,7 @@ $('scan').onclick = async () => {
           const c = codeOf(r[0].rawValue); const lm = /[?&]l=(\d+)/.exec(r[0].rawValue || '');
           if (c) {
             stopScan();
-            if (lm && Number(lm[1]) !== LOCAL) { LOCAL = Number(lm[1]); await Promise.all([loadCatalog(), loadLocalTienda()]); }
+            if (lm && Number(lm[1]) !== LOCAL) { LOCAL = Number(lm[1]); await loadLocalTienda(); await Promise.all([loadCatalog(), loadPromos()]); }
             openSheet(c);
           }
         }
@@ -531,12 +617,29 @@ function saludo() {
   }, 2600);
 }
 
+/* ---------- Sugerencias y reclamos ---------- */
+$('bzabrir').onclick = () => { $('bztxt').value = ''; say('bzst', ''); $('bzsheet').classList.remove('hide'); };
+$('bzx').onclick = () => $('bzsheet').classList.add('hide');
+$('bzok').onclick = async () => {
+  const msg = $('bztxt').value.trim();
+  if (msg.length < 5) { say('bzst', 'Escribe tu mensaje (mínimo 5 letras).', true); return; }
+  const tipo = (document.querySelector('input[name=bzt]:checked') || {}).value || 'sugerencia';
+  $('bzok').disabled = true; say('bzst', 'Enviando…');
+  const { error } = await sb.rpc('enviar_buzon', { p_tipo: tipo, p_mensaje: msg, p_cliente: $('cl').value || null, p_contacto: $('bzcon').value.trim() || null, p_sucursal: LOCINFO ? LOCINFO.id : LOCAL });
+  $('bzok').disabled = false;
+  if (error) { say('bzst', /enviar_buzon/.test(error.message) ? 'Por ahora no se pueden enviar mensajes. Intenta más tarde.' : error.message, true); return; }
+  $('bztxt').value = '';
+  say('bzst', tipo === 'reclamo' ? 'Recibimos tu reclamo y lo revisaremos lo antes posible. ¡Gracias!' : '¡Gracias por tu sugerencia! La leeremos con atención.');
+};
+
 /* ---------- Inicio ---------- */
 let modoInicial = 'animada';
 try { modoInicial = modoValido(localStorage.getItem('mascotaModo')); } catch (e) {}
 montarMascota(modoInicial);
+try { const c = JSON.parse(localStorage.getItem('marca_' + (LOCAL || 0))); if (c) aplicarMarca(c); } catch (e) {}
 (async () => {
-  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota(), loadLocalTienda()]);
+  await loadLocalTienda();
+  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota()]);
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
   saludo();

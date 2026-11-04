@@ -175,7 +175,7 @@ async function loadExtras() {
   ]);
   $('tp').innerHTML = '<option value="">Sin producto</option>' + prods.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)}</option>`).join('');
   $('tlist').innerHTML = pr.error ? '<div class="mu" style="margin-top:8px">Falta ejecutar supabase_v2.sql en Supabase.</div>'
-    : (pr.data || []).map(p => `<div class="line"><span>${esc(p.titulo)}</span><button class="btn sm red" data-qp="${p.id}">Quitar</button></div>`).join('');
+    : (pr.data || []).map(p => `<div class="line"><span>${p.video_url || p.video_externo ? '🎬 ' : ''}${esc(p.titulo)}${p.sucursal_id && typeof nomLocal === 'function' ? ' <span class="mu">· ' + esc(nomLocal(p.sucursal_id)) + '</span>' : ''}</span><button class="btn sm red" data-qp="${p.id}">Quitar</button></div>`).join('');
   ajustes = {};
   (aj.data || []).forEach(r => ajustes[r.clave] = r.valor);
   $('ptx').value = ajustes.pago_texto || '';
@@ -205,14 +205,27 @@ $('tadd').onclick = async () => {
   if (!titulo) { say('tmsg', 'Escribe un título.', true); return; }
   $('tadd').disabled = true; say('tmsg', 'Publicando…');
   try {
-    const f = $('tf').files[0];
+    const f = $('tf').files[0], vf = $('tvid').files[0], yt = $('tyt').value.trim();
     const imagen_url = f ? await subir(f, 'promo', 1000, 0.85) : null;
-    const { error } = await sb.from('promos').insert({ titulo, texto: $('tx2').value.trim() || null, imagen_url, codigo: $('tp').value || null });
+    let video_url = null;
+    if (vf) {
+      if (vf.size > 50 * 1024 * 1024) throw new Error('El video pesa más de 50 MB. Usa uno más corto o enlaza uno de YouTube.');
+      const ext = ((vf.name.split('.').pop() || 'mp4').toLowerCase()).replace(/[^a-z0-9]/g, '') || 'mp4';
+      const path = `video-${Date.now()}.${ext}`;
+      say('tmsg', 'Subiendo el video…');
+      const up = await sb.storage.from('multimedia').upload(path, vf, { contentType: vf.type || 'video/mp4' });
+      if (up.error) throw up.error;
+      video_url = sb.storage.from('multimedia').getPublicUrl(path).data.publicUrl;
+    }
+    if (yt && !/(youtu\.be\/|youtube\.com\/)/.test(yt)) throw new Error('El enlace de YouTube no parece válido.');
+    const fila = { titulo, texto: $('tx2').value.trim() || null, imagen_url, codigo: $('tp').value || null };
+    if (video_url || yt || $('tloc').value) Object.assign(fila, { video_url, video_externo: yt || null, sucursal_id: $('tloc').value ? Number($('tloc').value) : null });
+    const { error } = await sb.from('promos').insert(fila);
     if (error) throw error;
-    ['tt', 'tx2', 'tf'].forEach(i => $(i).value = '');
+    ['tt', 'tx2', 'tf', 'tvid', 'tyt'].forEach(i => $(i).value = '');
     say('tmsg', 'Promoción publicada.');
     loadExtras();
-  } catch (e) { say('tmsg', 'No se pudo publicar: ' + (e.message || e), true); }
+  } catch (e) { const m = (e && e.message) || String(e); say('tmsg', /video_url|video_externo|sucursal_id|multimedia|bucket/i.test(m) ? 'Falta ejecutar supabase_v16.sql en Supabase.' : 'No se pudo publicar: ' + m, true); }
   $('tadd').disabled = false;
 };
 function verMascota() {

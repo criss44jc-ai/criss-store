@@ -20,6 +20,7 @@ function tab(t) {
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'cli' && typeof loadClientes === 'function') loadClientes();
   if (t === 'loc' && typeof loadLocales === 'function') loadLocales();
+  if (t === 'buz' && typeof loadBuzon === 'function') loadBuzon();
 }
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 $('lg').onclick = async () => {
@@ -39,6 +40,8 @@ async function loadAll() {
   fillClients(); renderAlerts(); renderProds(); renderProdSelect(); renderCob(); loadEntradas(); loadComps(); loadAnulaciones();
   if (typeof loadLocales === 'function') loadLocales();
   if (typeof loadPerdidas === 'function') loadPerdidas();
+  if (typeof loadGrupos === 'function') loadGrupos();
+  if (typeof loadBuzon === 'function') loadBuzon();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
 }
@@ -122,7 +125,7 @@ function renderProds() {
         <div>Existencia: <span class="${p.stock <= p.umbral ? 'low' : ''}">${p.stock}</span></div>
         <select data-cat="${p.id}" aria-label="Categoría" style="margin-top:6px;padding:6px;font-size:14px;width:auto">
           ${['snack', 'bebida', 'comida', 'otro'].map(k => `<option value="${k}" ${p.categoria === k ? 'selected' : ''}>${k[0].toUpperCase() + k.slice(1)}</option>`).join('')}
-        </select>
+        </select>${typeof selectorGrupo === 'function' ? selectorGrupo(p) : ''}
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <button class="btn sm" data-rep="${p.id}">Comprar a proveedor</button>
           <button class="btn sm" data-pr="${p.id}">Cambiar precio</button>

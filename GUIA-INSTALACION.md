@@ -7,14 +7,14 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | Archivo | Para qué sirve |
 |---|---|
 | `index.html` | La tienda que ven tus clientes |
-| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js` | Tu panel de administrador (se abre en `/admin.html`) |
+| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js` | Tu panel de administrador (se abre en `/admin.html`) |
 | `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
 | `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
 | `mascota-pixel.js` y `mascota-pixel-alegre.gif`, `-canta.gif`, `-asoma.gif`, `-reposo.gif` | **La mascota pixelada animada**, de 64 × 64 píxeles y mostrada a 128 px (la tienda necesita los 5 archivos) |
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v14.sql` | La base de datos, en 14 partes |
+| `supabase.sql` a `supabase_v16.sql` | La base de datos, en 16 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con catorce columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con dieciséis columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las catorce columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las dieciséis columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -42,7 +42,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -88,6 +88,26 @@ En `/admin.html` → **Locales**:
 - **Pedido desde el panel:** al crear un pedido para un cliente eliges de qué local sale.
 - **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
 - Si anulas un pedido, la mercancía vuelve al local de donde salió.
+
+## Inventario por día
+
+En `/admin.html` → **Locales → Inventario por día**: eliges un rango de fechas y un local (o todos) y ves, por producto, cómo **empezó** el primer día, lo que **entró**, lo que se **vendió**, lo que se **perdió**, los **traslados** y cómo **terminó** el último día. Hay atajos para hoy, ayer, los últimos 7 días y el mes. El registro empieza el día que instalas `supabase_v15.sql`: para fechas anteriores el sistema te avisa que las cifras de "Empezó" pueden no ser exactas.
+
+## Personalizar cada local
+
+En **Locales → Personalizar** (cada local, incluida la casa madre, tiene su botón): **nombre que ve el cliente**, **eslogan**, **logo**, **imagen de portada** y **colores** del encabezado y de los botones, con vista previa. La tienda aplica la marca del local por cuyo enlace entra el cliente. Si no personalizas nada, se ve como siempre.
+
+## Promociones con video
+
+En **Más → Promociones**: además de la imagen, puedes **subir un video** (hasta 50 MB; mejor corto, de 15 a 30 segundos) o pegar un **enlace de YouTube**, y elegir si se muestra **en todos los locales** o solo en uno. Si hay varias promociones, **pasan solas** cada pocos segundos; se detienen un rato si el cliente las toca. Los videos subidos se reproducen sin sonido solo cuando se ven en pantalla.
+
+## Grupos de productos
+
+En **Inventario → Grupos de productos** creas los grupos que quieras (Sodas, Snacks, Dulces…), los ordenas con ▲ ▼ y asignas cada producto a uno desde su tarjeta. En la tienda aparecen como botones para filtrar ("Todos", cada grupo y "Otros" para lo que no tiene grupo).
+
+## Sugerencias y reclamos
+
+Los clientes tienen en la tienda el botón **Escribir un mensaje**: eligen si es una sugerencia o un reclamo, escriben, y pueden dejar un teléfono o correo. Tú los ves en la pestaña **Buzón** (con el número de mensajes nuevos), y puedes ponerlos **en revisión**, **resolverlos** y dejar una nota.
 
 ## Pérdidas de inventario
 

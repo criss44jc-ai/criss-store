@@ -20,6 +20,7 @@ async function loadLocales() {
   stockSuc = st.data || []; traslados = t.data || [];
   localVenta = (lv.data && lv.data[0] && lv.data[0].valor) || '';
   renderLocales(); renderInventarioLocales(); llenarTraslado(); renderTraslados(); llenarSelectorVenta(); loadVentasLocal();
+  if (typeof extrasLocales === 'function') extrasLocales();
 }
 
 /* ---------- Mis locales ---------- */
@@ -29,7 +30,7 @@ function renderLocales() {
         ${String(localVenta) === String(l.id) || (!localVenta && l.es_madre) ? '<span class="badge ok">Vende en línea por defecto</span>' : ''}
         <div class="mu" style="word-break:break-all;margin-top:2px">Enlace de venta: ${esc(urlLocal(l.id))}</div>
         <button class="btn sm" style="margin-top:4px" data-cpl="${esc(urlLocal(l.id))}">Copiar enlace</button></div>
-      <div style="display:flex;gap:6px"><button class="btn sm" data-ren="${l.id}">Renombrar</button>${l.es_madre ? '' : `<button class="btn sm red" data-qui="${l.id}">Quitar</button>`}</div></div>`).join('');
+      <div style="display:flex;gap:6px"><button class="btn sm" data-mk="${l.id}">Personalizar</button><button class="btn sm" data-ren="${l.id}">Renombrar</button>${l.es_madre ? '' : `<button class="btn sm red" data-qui="${l.id}">Quitar</button>`}</div></div>`).join('');
 }
 const urlLocal = id => location.origin + '/?l=' + id;
 $('locl').onclick = async e => {

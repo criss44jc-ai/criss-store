@@ -87,6 +87,7 @@ summary{cursor:pointer;font-weight:700}
 nav{overflow-x:auto}
 nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
 .badge.gold{background:#fff3bf;color:#7a5b00}
+input[type=color]{height:44px;padding:4px}
 #stbody,#rbody{padding:24px 26px;background:#fff;color:var(--ink);border:1px solid var(--ln);border-radius:12px}
 @media print{body>*:not(#stmt):not(#rep){display:none!important}#stmt,#rep{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none;padding:0}#stbody,#rbody{border:0;border-radius:0;padding:36px 44px}.noprint{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -101,6 +102,7 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
     <button data-t="inv">Inventario</button>
     <button data-t="cli">Clientes</button>
     <button data-t="loc">Locales</button>
+    <button data-t="buz">Buzón</button>
     <button data-t="mas">Más</button>
   </nav>
 </div></header>
@@ -235,6 +237,15 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
   </div>
 
   <div class="card">
+    <h2>Grupos de productos</h2>
+    <div class="mu">Agrupa tus productos como quieras (Sodas, Snacks, Dulces…). En la tienda aparecen como botones para filtrar. La categoría de cada producto (Snack, Bebida…) sigue sirviendo para que la mascota sugiera combinaciones.</div>
+    <div id="gplist" style="margin-top:6px"></div>
+    <label>Nuevo grupo</label><input id="gpn" maxlength="30" placeholder="Ej: Sodas">
+    <button class="btn go" id="gpadd">Agregar grupo</button>
+    <div class="msg" id="gpmsg"></div>
+  </div>
+
+  <div class="card">
     <h2>Pérdidas de inventario</h2>
     <div class="mu">Para dar de baja mercancía que se perdió: robos, desaparecidos, daños o vencidos. Descuenta del inventario del local y queda registrado.</div>
     <button class="btn" id="peabrir" style="background:#d64045">Registrar una pérdida</button>
@@ -271,6 +282,22 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
     <h2>Ventas por local</h2>
     <select id="vlp"><option value="hoy">Hoy</option><option value="mes" selected>Este mes</option><option value="todo">Todo el tiempo</option></select>
     <div id="vloc" class="scroll" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Inventario por día</h2>
+    <div class="mu">Cómo empezó el inventario un día y cómo terminó otro, local por local.</div>
+    <div class="row">
+      <div><label>Desde (cómo empezó)</label><input id="idd" type="date"></div>
+      <div><label>Hasta (cómo terminó)</label><input id="idh" type="date"></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn sm" data-ir="hoy">Hoy</button><button class="btn sm" data-ir="ayer">Ayer</button>
+      <button class="btn sm" data-ir="7">Últimos 7 días</button><button class="btn sm" data-ir="mes">Este mes</button>
+    </div>
+    <label>Local</label><select id="idl"></select>
+    <button class="btn go" id="idver">Ver</button>
+    <div id="idout" class="scroll" style="margin-top:10px"></div>
   </div>
 
   <div class="card">
@@ -362,6 +389,19 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
   </div>
 </section>
 
+<!-- ============ BUZÓN ============ -->
+<section class="pane hide" id="t-buz">
+  <div class="card">
+    <h2>Sugerencias y reclamos</h2>
+    <div class="mu">Lo que escriben tus clientes desde la tienda.</div>
+    <select id="buzf" style="margin-top:8px">
+      <option value="nuevo">Nuevos</option><option value="en_revision">En revisión</option>
+      <option value="resuelto">Resueltos</option><option value="todos">Todos</option>
+    </select>
+    <div id="buzout" style="margin-top:8px"></div>
+  </div>
+</section>
+
 <!-- ============ MÁS ============ -->
 <section class="pane hide" id="t-mas">
   <div class="card">
@@ -377,6 +417,9 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
     <label>Texto (opcional)</label><input id="tx2" placeholder="Ej: Solo esta semana">
     <label>Producto relacionado (opcional)</label><select id="tp"></select>
     <label>Imagen de la propaganda</label><input id="tf" type="file" accept="image/*">
+    <label>Video de propaganda (opcional, hasta 50 MB)</label><input id="tvid" type="file" accept="video/mp4,video/webm,video/quicktime">
+    <label>o enlace de YouTube (opcional)</label><input id="tyt" placeholder="https://youtu.be/…">
+    <label>Dónde se muestra</label><select id="tloc"><option value="">En todos los locales</option></select>
     <button class="btn go" id="tadd">Publicar promoción</button>
     <div class="msg" id="tmsg"></div>
     <div id="tlist"></div>
@@ -460,6 +503,26 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
   <button class="btn sm" id="cmx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
 </div></div>
 
+<div id="marca" class="sheet hide"><div class="stbox">
+  <h2>Personalizar tienda</h2>
+  <div class="mu" id="mk-loc"></div>
+  <div id="mk-prev" style="border-radius:12px;overflow:hidden;border:1px solid var(--ln);margin:8px 0"></div>
+  <label>Nombre que ve el cliente</label><input id="mk-tit" maxlength="40" placeholder="Ej: Mi Tienda Centro">
+  <label>Eslogan</label><input id="mk-esl" maxlength="80" placeholder="Ej: ¡Lo mejor del barrio!">
+  <label>Logo</label><input id="mk-logo" type="file" accept="image/*">
+  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mk-qlogo"> Quitar el logo (volver a la mascota)</label>
+  <label>Imagen de portada (opcional)</label><input id="mk-port" type="file" accept="image/*">
+  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mk-qport"> Quitar la portada</label>
+  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mk-def"> Usar los colores originales</label>
+  <div class="row">
+    <div><label>Color del encabezado</label><input id="mk-col1" type="color" value="#ffd23f"></div>
+    <div><label>Color de los botones</label><input id="mk-col2" type="color" value="#0b7a75"></div>
+  </div>
+  <button class="btn go" id="mk-ok" style="width:100%">Guardar</button>
+  <button class="btn sm" id="mk-x" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
+  <div class="msg err" id="mk-msg"></div>
+</div></div>
+
 <div id="perdida" class="sheet hide"><div>
   <h2>Registrar pérdida</h2>
   <div class="mu">La mercancía sale del inventario y se cuenta como pérdida.</div>
@@ -516,5 +579,6 @@ nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
 <script src="admin3.js"></script>
 <script src="admin4.js"></script>
 <script src="admin5.js"></script>
+<script src="admin6.js"></script>
 </body>
 </html>
