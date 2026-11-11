@@ -88,6 +88,15 @@ nav{overflow-x:auto}
 nav button{font-size:13px;padding:9px 10px;flex:1 0 auto}
 .badge.gold{background:#fff3bf;color:#7a5b00}
 input[type=color]{height:44px;padding:4px}
+.cv{position:relative}
+.cv svg{width:100%;height:auto;display:block;touch-action:pan-y}
+.cvtip{position:absolute;top:0;transform:translateX(-50%);background:#12263a;color:#fff;border-radius:8px;padding:6px 9px;font-size:12px;pointer-events:none;white-space:nowrap;z-index:2;line-height:1.35}
+.wd{display:flex;gap:6px;align-items:flex-end;height:96px;margin-top:6px}
+.wd div{flex:1;text-align:center;font-size:11px;color:var(--mu);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.wd i{display:block;background:#1971c2;border-radius:6px 6px 0 0;min-height:2px;margin-bottom:3px}
+.wd div.mejor i{background:#0b7a75}
+.stat b.ok{color:#2b8a3e}
+.stat b.low{color:#d64045}
 #stbody,#rbody{padding:24px 26px;background:#fff;color:var(--ink);border:1px solid var(--ln);border-radius:12px}
 @media print{body>*:not(#stmt):not(#rep){display:none!important}#stmt,#rep{position:static;display:block;background:#fff}.sheet>div{max-width:none;border-radius:0;max-height:none;padding:0}#stbody,#rbody{border:0;border-radius:0;padding:36px 44px}.noprint{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -132,6 +141,21 @@ input[type=color]{height:44px;padding:4px}
     <div class="line" style="border:0;padding:0"><h2 style="margin:0">Por agotarse</h2><button class="btn sm" id="out">Salir</button></div>
     <div id="alerts" style="margin-top:8px"></div>
   </div>
+  <div class="card">
+    <h2>Curva de ventas 📈</h2>
+    <div class="row">
+      <div><label>Período</label><select id="cvp">
+        <option value="7">Últimos 7 días</option><option value="14">Últimos 14 días</option>
+        <option value="30" selected>Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="mes">Este mes</option></select></div>
+      <div><label>Mostrar</label><select id="cvm">
+        <option value="ventas">Ventas ($)</option><option value="ganancia">Ganancia ($)</option>
+        <option value="unidades">Unidades</option><option value="pedidos">Pedidos</option></select></div>
+    </div>
+    <label>Local</label><select id="cvl"><option value="">Todos los locales</option></select>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="cvc" checked> Comparar con el período anterior</label>
+    <div id="cvout" style="margin-top:10px"></div>
+  </div>
+
   <div class="card">
     <h2>Últimas ventas</h2>
     <div id="ult"></div>
@@ -250,6 +274,12 @@ input[type=color]{height:44px;padding:4px}
     <div class="mu">Para dar de baja mercancía que se perdió: robos, desaparecidos, daños o vencidos. Descuenta del inventario del local y queda registrado.</div>
     <button class="btn" id="peabrir" style="background:#d64045">Registrar una pérdida</button>
     <div id="pehist" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cambios de nombre</h2>
+    <div class="mu">Cada cambio de nombre de un producto queda anotado con su justificación.</div>
+    <div id="cnlist" style="margin-top:6px"></div>
   </div>
 
   <h2>Inventario</h2>
@@ -503,6 +533,25 @@ input[type=color]{height:44px;padding:4px}
   <button class="btn sm" id="cmx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
 </div></div>
 
+<div id="renombre" class="sheet hide"><div>
+  <h2>Cambiar nombre del producto</h2>
+  <div class="mu" id="rn2-act"></div>
+  <label>Nombre nuevo</label><input id="rn2-nom" maxlength="80">
+  <label>Motivo</label>
+  <select id="rn2-mot">
+    <option value="error_escritura">Estaba mal escrito</option>
+    <option value="presentacion">Cambió la presentación o la marca</option>
+    <option value="nuevo_nombre">Le doy un nuevo nombre comercial</option>
+    <option value="otro">Otro motivo</option>
+  </select>
+  <label>Justificación (obligatoria)</label>
+  <textarea id="rn2-com" rows="3" maxlength="300" placeholder="Explica por qué cambias el nombre"></textarea>
+  <div class="mu" style="margin-top:6px">El nuevo nombre también se aplica a las ventas, compras y pérdidas de este producto, para que tus reportes no se separen en dos.</div>
+  <button class="btn go" id="rn2-ok" style="width:100%">Guardar el nombre nuevo</button>
+  <button class="btn sm" id="rn2-x" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
+  <div class="msg err" id="rn2-msg"></div>
+</div></div>
+
 <div id="marca" class="sheet hide"><div class="stbox">
   <h2>Personalizar tienda</h2>
   <div class="mu" id="mk-loc"></div>
@@ -580,5 +629,6 @@ input[type=color]{height:44px;padding:4px}
 <script src="admin4.js"></script>
 <script src="admin5.js"></script>
 <script src="admin6.js"></script>
+<script src="admin7.js"></script>
 </body>
 </html>

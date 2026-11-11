@@ -45,6 +45,7 @@ function extrasLocales() {
   const o = locales.map(l => `<option value="${l.id}">${esc(l.nombre)}</option>`).join('');
   const vl = $('idl').value; $('idl').innerHTML = '<option value="">Todos los locales</option>' + o; if (vl && locales.some(l => l.id == vl)) $('idl').value = vl;
   const vt = $('tloc').value; $('tloc').innerHTML = '<option value="">En todos los locales</option>' + o; if (vt && locales.some(l => l.id == vt)) $('tloc').value = vt;
+  if (typeof llenarLocalesCurva === 'function') llenarLocalesCurva();
   if (!$('t-loc').classList.contains('hide')) cargarInvDia();
 }
 

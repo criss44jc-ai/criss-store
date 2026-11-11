@@ -41,6 +41,8 @@ async function loadAll() {
   if (typeof loadLocales === 'function') loadLocales();
   if (typeof loadPerdidas === 'function') loadPerdidas();
   if (typeof loadGrupos === 'function') loadGrupos();
+  if (typeof loadCurva === 'function') loadCurva();
+  if (typeof loadCambiosNombre === 'function') loadCambiosNombre();
   if (typeof loadBuzon === 'function') loadBuzon();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
@@ -129,6 +131,7 @@ function renderProds() {
         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
           <button class="btn sm" data-rep="${p.id}">Comprar a proveedor</button>
           <button class="btn sm" data-pr="${p.id}">Cambiar precio</button>
+          <button class="btn sm" data-rnp="${p.id}">Cambiar nombre</button>
           <label class="btn sm" style="cursor:pointer;margin:0;display:inline-block">Cambiar foto<input type="file" accept="image/*" hidden data-img="${p.id}"></label>
           <button class="btn sm red" data-pe="${p.id}">Pérdida</button>
           <button class="btn sm red" data-del="${p.id}">Quitar</button>

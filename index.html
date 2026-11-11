@@ -69,6 +69,26 @@ header,.adm{color:var(--hdtx,var(--ink))}
 .chip{flex:none;padding:8px 14px;border:1px solid var(--ln);background:#fff;border-radius:99px;font:700 14px var(--tx);cursor:pointer;color:var(--ink)}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 textarea{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;background:#fff;color:var(--ink);font:16px var(--tx);margin-top:8px}
+.burger{flex:none;width:46px;height:46px;border-radius:12px;border:2px solid currentColor;background:transparent;color:inherit;font-size:22px;line-height:1;cursor:pointer}
+.side{position:fixed;top:0;bottom:0;left:0;width:270px;max-width:84vw;background:#fff;border-right:1px solid var(--ln);z-index:7;transform:translateX(-100%);transition:transform .22s ease;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 12px 24px;box-shadow:4px 0 18px rgba(18,38,58,.18)}
+.side.on{transform:none}
+.sidebg{position:fixed;inset:0;background:rgba(18,38,58,.45);z-index:6}
+.sidehd{display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px;font:800 18px var(--hd)}
+.sidex{border:0;background:none;font-size:30px;line-height:1;cursor:pointer;color:var(--ink)}
+.sitem{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:12px;border:0;background:none;border-radius:10px;text-align:left;font:600 16px var(--tx);color:var(--ink);cursor:pointer}
+.sitem:hover{background:#eef2f7}
+.sitem.on{background:var(--ink);color:#fff}
+.sitem small{background:var(--ln);color:var(--ink);border-radius:99px;padding:1px 9px;font-size:12px;font-weight:700}
+.sdiv{height:1px;background:var(--ln);margin:8px 4px}
+.seccion{font:700 21px var(--hd);margin:20px 0 8px;display:flex;align-items:baseline;gap:8px;scroll-margin-top:12px}
+.seccion small{font:500 14px var(--tx);color:var(--mu)}
+@media (min-width:900px){
+  .side{transform:none;box-shadow:none;z-index:3}
+  body{padding-left:270px}
+  .burger,.sidex,.sidebg{display:none!important}
+  #mascota{left:282px}
+  .chips{display:none}
+}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover;flex:none}
 .slogan{font-weight:700;font-size:14px;margin-top:4px}
@@ -89,8 +109,14 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 </style>
 </head>
 <body>
+<div id="sidebg" class="sidebg hide"></div>
+<aside id="side" class="side" aria-label="Secciones de la tienda">
+  <div class="sidehd"><span>Secciones</span><button class="sidex" id="sideX" aria-label="Cerrar el menú">×</button></div>
+  <nav id="sidenav"></nav>
+</aside>
 <header><div class="bar">
   <div class="brand">
+    <button class="burger" id="burger" aria-label="Abrir el menú de secciones">☰</button>
     <img class="logo" id="logo" src="mascota.png" alt="Logo de la tienda">
     <div><h1 id="ttl">CRISS’ STORE</h1><div class="slogan" id="slg">¡Come sin remordimientos! 😋</div><div class="slogan hide" id="localtag"></div></div>
   </div>
@@ -114,7 +140,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 
   <h2>Elige tu producto</h2>
   <div class="chips hide" id="chips"></div>
-  <div class="tiles" id="cat"></div>
+  <div id="cat"></div>
 
   <div class="card" style="margin-top:14px">
     <h2>Mi cuenta pendiente</h2>
@@ -246,31 +272,82 @@ $('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value);
 
 /* ---------- Catálogo y promociones ---------- */
 let grupoSel = '';
+const CAT_NOMBRE = { bebida: 'Bebidas', snack: 'Snacks', comida: 'Comidas', otro: 'Otros' };
+const CAT_ORDEN = { bebida: 0, snack: 1, comida: 2, otro: 3 };
 async function loadCatalog() {
   const { data, error } = await sb.rpc('catalogo', { p_sucursal: LOCAL });
   if (error) { say('bm', 'No se pudo cargar el catálogo. Revisa config.js.', true); return; }
   cat = data || [];
   renderCatalogo();
 }
-function renderCatalogo() {
-  const grupos = [...new Set(cat.filter(p => p.grupo).sort((a, b) => (a.grupo_orden || 0) - (b.grupo_orden || 0) || a.grupo.localeCompare(b.grupo)).map(p => p.grupo))];
-  const ch = $('chips');
-  if (grupos.length) {
-    const opts = ['', ...grupos, ...(cat.some(p => !p.grupo) ? ['__otros'] : [])];
-    if (!opts.includes(grupoSel)) grupoSel = '';
-    ch.innerHTML = opts.map(g => `<button class="chip ${g === grupoSel ? 'on' : ''}" data-g="${esc(g)}">${g === '' ? 'Todos' : g === '__otros' ? 'Otros' : esc(g)}</button>`).join('');
-    ch.classList.remove('hide');
-  } else { ch.classList.add('hide'); grupoSel = ''; }
-  const lista = cat.filter(p => !grupoSel || (grupoSel === '__otros' ? !p.grupo : p.grupo === grupoSel));
-  $('cat').innerHTML = lista.length ? lista.map(p => `
+// Secciones: los grupos que creó el administrador; si no hay ninguno, la categoría de cada producto
+function secciones() {
+  const conGrupos = cat.some(p => p.grupo), mapa = new Map();
+  cat.forEach(p => {
+    const k = conGrupos ? (p.grupo || '__otros') : (p.categoria || 'otro');
+    const nombre = conGrupos ? (p.grupo || 'Otros') : (CAT_NOMBRE[p.categoria] || 'Otros');
+    const orden = conGrupos ? (p.grupo ? (p.grupo_orden || 0) : 9999) : (CAT_ORDEN[p.categoria] !== undefined ? CAT_ORDEN[p.categoria] : 3);
+    if (!mapa.has(k)) mapa.set(k, { k, nombre, orden, items: [] });
+    mapa.get(k).items.push(p);
+  });
+  return [...mapa.values()].sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
+}
+const tileHtml = p => `
     <button class="tile" data-c="${esc(p.codigo)}" ${p.disponible ? '' : 'disabled'}>
       ${p.disponible ? '' : '<span class="tag">Agotado</span>'}
       ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="" loading="lazy">` : '<div class="ph">🛍️</div>'}
       <span class="nm">${esc(p.nombre)}</span>
       <span class="sub">${esc([p.marca, p.especificacion].filter(Boolean).join(' · '))}</span>
       ${p.precio != null ? `<span class="pr">${money(p.precio)}</span>` : ''}
-    </button>`).join('') : '<div class="mu">Todavía no hay productos.</div>';
+    </button>`;
+function renderCatalogo() {
+  const secs = secciones();
+  if (grupoSel && !secs.some(x => x.k === grupoSel)) grupoSel = '';
+  // botones rápidos (celular)
+  const ch = $('chips');
+  if (secs.length > 1) {
+    ch.innerHTML = [{ k: '', nombre: 'Todos' }, ...secs].map(x => `<button class="chip ${x.k === grupoSel ? 'on' : ''}" data-g="${esc(x.k)}">${esc(x.nombre)}</button>`).join('');
+    ch.classList.remove('hide');
+  } else ch.classList.add('hide');
+  // catálogo: "Todos" muestra cada sección con su título; una sección muestra solo sus productos
+  const ver = grupoSel ? secs.filter(x => x.k === grupoSel) : secs;
+  $('cat').innerHTML = ver.length ? ver.map(x => `
+    ${secs.length > 1 ? `<h3 class="seccion" id="sec-${esc(x.k)}">${esc(x.nombre)} <small>${x.items.length} ${x.items.length === 1 ? 'producto' : 'productos'}</small></h3>` : ''}
+    <div class="tiles">${x.items.map(tileHtml).join('')}</div>`).join('') : '<div class="mu">Todavía no hay productos.</div>';
+  renderMenu(secs);
 }
+function renderMenu(secs) {
+  const item = (k, ico, nom, n) => `<button class="sitem ${k === grupoSel ? 'on' : ''}" data-sec="${esc(k)}"><span>${ico} ${esc(nom)}</span>${n != null ? `<small>${n}</small>` : ''}</button>`;
+  const icono = (k, nom) => {
+    const base = { bebida: '🥤', snack: '🍿', comida: '🍽️', otro: '🛍️', __otros: '🛍️' }[k];
+    if (base) return base;
+    const t = String(nom || '').toLowerCase();
+    if (/soda|bebida|jugo|agua|refresco|malta|batido|energ|café|cafe|té\b/.test(t)) return '🥤';
+    if (/snack|pasaboca|chifle|papa|platan|plátan|maní|mani|chip/.test(t)) return '🍿';
+    if (/dulce|caramelo|chocolate|golosina|galleta|helado|postre/.test(t)) return '🍬';
+    if (/comida|empanada|sandwich|sándwich|pan\b|almuerzo|desayuno|pizza|hamburguesa/.test(t)) return '🍽️';
+    return '🛍️';
+  };
+  $('sidenav').innerHTML = item('', '🏠', 'Todos los productos', cat.length) +
+    secs.map(x => item(x.k, icono(x.k, x.nombre), x.nombre, x.items.length)).join('') +
+    '<div class="sdiv"></div>' +
+    (!$('promos').classList.contains('hide') ? '<button class="sitem" data-go="promos"><span>🎁 Promociones</span></button>' : '') +
+    '<button class="sitem" data-go="cuenta"><span>🧾 Mi cuenta</span></button>' +
+    '<button class="sitem" data-go="buzon"><span>💬 Sugerencias y reclamos</span></button>';
+}
+const abrirMenu = () => { $('side').classList.add('on'); $('sidebg').classList.remove('hide'); };
+const cerrarMenu = () => { $('side').classList.remove('on'); $('sidebg').classList.add('hide'); };
+$('burger').onclick = abrirMenu; $('sideX').onclick = cerrarMenu; $('sidebg').onclick = cerrarMenu;
+$('sidenav').onclick = e => {
+  const sec = e.target.closest('[data-sec]'), go = e.target.closest('[data-go]');
+  if (sec) { grupoSel = sec.dataset.sec; renderCatalogo(); cerrarMenu(); $('cat').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  if (go) {
+    cerrarMenu();
+    if (go.dataset.go === 'promos') $('promos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (go.dataset.go === 'cuenta') $('acc').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (go.dataset.go === 'buzon') $('bzabrir').click();
+  }
+};
 $('chips').onclick = e => { const b = e.target.closest('[data-g]'); if (b) { grupoSel = b.dataset.g; renderCatalogo(); } };
 $('cat').onclick = e => { const b = e.target.closest('.tile'); if (b && !b.disabled) openSheet(b.dataset.c); };
 
@@ -298,6 +375,7 @@ async function loadPromos() {
     $('pstrip').querySelectorAll('video').forEach(v => promoObs.observe(v));
   }
   autoPromos();
+  if (cat.length) renderMenu(secciones());
 }
 // si hay varias promociones, pasan solas cada pocos segundos (se detienen si el cliente las toca)
 function autoPromos() {
