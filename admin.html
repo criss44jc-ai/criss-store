@@ -277,6 +277,12 @@ input[type=color]{height:44px;padding:4px}
   </div>
 
   <div class="card">
+    <h2>Correcciones de precios y costos</h2>
+    <div class="mu">Cada cambio de precio y cada corrección de una compra a proveedor queda anotado aquí.</div>
+    <div id="colist" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
     <h2>Cambios de nombre</h2>
     <div class="mu">Cada cambio de nombre de un producto queda anotado con su justificación.</div>
     <div id="cnlist" style="margin-top:6px"></div>
@@ -533,6 +539,46 @@ input[type=color]{height:44px;padding:4px}
   <button class="btn sm" id="cmx" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
 </div></div>
 
+<div id="precio" class="sheet hide"><div class="stbox">
+  <h2>Precio de venta</h2>
+  <div class="mu" id="pr2-act"></div>
+  <label>Precio nuevo ($)</label><input id="pr2-nuevo" type="number" min="0" step="0.01">
+  <label class="opt" style="display:flex;gap:10px;align-items:center;margin-top:10px"><input type="radio" name="pr2m" value="ahora" checked style="width:auto"> Cambiar desde ahora (los pedidos anteriores conservan su precio)</label>
+  <label class="opt" style="display:flex;gap:10px;align-items:center"><input type="radio" name="pr2m" value="corregir" style="width:auto"> Corregir un error de carga (arregla también los pedidos pendientes)</label>
+  <div id="pr2-corr" class="hide">
+    <label>Corregir los pedidos pendientes hechos desde</label><input id="pr2-desde" type="date">
+    <div class="tip" id="pr2-vista" style="margin-top:8px">Calculando…</div>
+    <label>Motivo</label>
+    <select id="pr2-mot"><option value="error_carga">Cargué mal el precio</option><option value="error_digitacion">Error de digitación</option><option value="otro">Otro motivo</option></select>
+    <label>Justificación (obligatoria)</label>
+    <textarea id="pr2-com" rows="3" maxlength="300" placeholder="Explica qué pasó"></textarea>
+    <div class="mu" style="margin-top:6px">Solo se corrigen los pedidos que aún no tienen ningún pago. Los que ya tienen pagos conservan el monto cobrado.</div>
+  </div>
+  <button class="btn go" id="pr2-ok" style="width:100%">Guardar precio</button>
+  <button class="btn sm" id="pr2-x" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
+  <div class="msg err" id="pr2-msg"></div>
+</div></div>
+
+<div id="corrcompra" class="sheet hide"><div class="stbox">
+  <h2>Corregir compra a proveedor</h2>
+  <div class="mu" id="ce-act"></div>
+  <label>Total correcto de la factura ($)</label><input id="ce-total" type="number" min="0" step="0.01">
+  <div class="tip" id="ce-unit" style="margin-top:8px"></div>
+  <label class="opt" style="display:flex;gap:10px;align-items:center;margin-top:10px"><input type="checkbox" id="ce-aplicar" checked style="width:auto"> Actualizar también el costo del producto y de sus ventas (para que las ganancias queden bien)</label>
+  <div id="ce-ap">
+    <label>Costo correcto por unidad ($)</label><input id="ce-cu" type="number" min="0" step="0.0001">
+    <label>Corregir el costo de las ventas hechas desde</label><input id="ce-desde" type="date">
+  </div>
+  <label>Motivo</label>
+  <select id="ce-mot"><option value="error_digitacion">Error de digitación</option><option value="factura_distinta">La factura decía otra cosa</option><option value="otro">Otro motivo</option></select>
+  <label>Justificación (obligatoria)</label>
+  <textarea id="ce-com" rows="3" maxlength="300" placeholder="Explica qué pasó"></textarea>
+  <label>Foto que lo respalda (opcional)</label><input id="ce-foto" type="file" accept="image/*">
+  <button class="btn go" id="ce-ok" style="width:100%">Guardar corrección</button>
+  <button class="btn sm" id="ce-x" style="width:100%;margin-top:8px;padding:11px">Cancelar</button>
+  <div class="msg err" id="ce-msg"></div>
+</div></div>
+
 <div id="renombre" class="sheet hide"><div>
   <h2>Cambiar nombre del producto</h2>
   <div class="mu" id="rn2-act"></div>
@@ -630,5 +676,6 @@ input[type=color]{height:44px;padding:4px}
 <script src="admin5.js"></script>
 <script src="admin6.js"></script>
 <script src="admin7.js"></script>
+<script src="admin8.js"></script>
 </body>
 </html>

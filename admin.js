@@ -43,6 +43,7 @@ async function loadAll() {
   if (typeof loadGrupos === 'function') loadGrupos();
   if (typeof loadCurva === 'function') loadCurva();
   if (typeof loadCambiosNombre === 'function') loadCambiosNombre();
+  if (typeof loadCorrecciones === 'function') loadCorrecciones();
   if (typeof loadBuzon === 'function') loadBuzon();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();
@@ -208,13 +209,15 @@ $('eadd').onclick = async () => {
   } catch (e) { say('emsg', 'No se pudo registrar: ' + (e.message || e), true); }
   $('eadd').disabled = false;
 };
+let entradasLista = [];
 async function loadEntradas() {
   const { data, error } = await sb.from('entradas').select('*').order('id', { ascending: false }).limit(10);
   if (error) { $('elist').innerHTML = '<div class="mu" style="margin-top:8px">Falta ejecutar supabase_v3.sql en Supabase.</div>'; return; }
+  entradasLista = data || [];
   $('elist').innerHTML = (data && data.length ? '<div class="mu" style="margin-top:12px">Últimas compras a proveedor</div>' : '') +
     (data || []).map(r => `<div class="line"><div>${r.cantidad} × ${esc(r.producto_nombre)}
       <div class="mu">${fdate(r.fecha)}${r.proveedor ? ' · ' + esc(r.proveedor) : ''}</div></div>
-      <div><strong>${money(r.costo_total)}</strong> ${r.factura_path ? `<button class="btn sm" data-fac="${esc(r.factura_path)}">Ver factura</button>` : ''}</div></div>`).join('');
+      <div style="text-align:right"><strong>${money(r.costo_total)}</strong><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px">${r.factura_path ? `<button class="btn sm" data-fac="${esc(r.factura_path)}">Ver factura</button>` : ''}<button class="btn sm" data-ce="${r.id}">Corregir</button></div></div></div>`).join('');
 }
 $('elist').onclick = async e => {
   const b = e.target.closest('[data-fac]');
@@ -315,20 +318,6 @@ $('hadd').onclick = async () => {
   await loadAll();
   say('hmsg', `Pedido anterior cargado para ${nombreDe(c)} (${data}). El inventario no cambió.`);
 };
-
-/* ---------- Cambiar el precio de un producto ---------- */
-document.addEventListener('click', async e => {
-  const b = e.target.closest('[data-pr]');
-  if (!b) return;
-  const p = prods.find(x => x.id == b.dataset.pr);
-  const txt = prompt(`Nuevo precio de ${p.nombre} ($).\nSolo afecta los pedidos nuevos; los ya hechos conservan su precio.`, Number(p.precio).toFixed(2));
-  if (txt === null) return;
-  const v = parseFloat(String(txt).replace(',', '.'));
-  if (!(v >= 0)) { alert('Escribe un precio válido.'); return; }
-  const { error } = await sb.from('productos').update({ precio: v }).eq('id', p.id);
-  if (error) { alert('No se pudo cambiar el precio: ' + error.message); return; }
-  loadAll();
-});
 
 /* ---------- Cambiar cuándo paga un pedido ---------- */
 let cmId = null;
