@@ -7,14 +7,14 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | Archivo | Para qué sirve |
 |---|---|
 | `index.html` | La tienda que ven tus clientes |
-| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js` | Tu panel de administrador (se abre en `/admin.html`) |
+| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js` | Tu panel de administrador (se abre en `/admin.html`) |
 | `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
 | `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
 | `mascota-pixel.js` y `mascota-pixel-alegre.gif`, `-canta.gif`, `-asoma.gif`, `-reposo.gif` | **La mascota pixelada animada**, de 64 × 64 píxeles y mostrada a 128 px (la tienda necesita los 5 archivos) |
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v18.sql` | La base de datos, en 18 partes |
+| `supabase.sql` a `supabase_v19.sql` | La base de datos, en 19 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con dieciocho columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con diecinueve columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las dieciocho columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las diecinueve columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -42,7 +42,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -88,6 +88,12 @@ En `/admin.html` → **Locales**:
 - **Pedido desde el panel:** al crear un pedido para un cliente eliges de qué local sale.
 - **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
 - Si anulas un pedido, la mercancía vuelve al local de donde salió.
+
+## Qué ve cada local
+
+En `/admin.html` → **Locales → Qué ve cada local**: una tabla con tus productos en filas y tus locales en columnas. Marca los productos que cada local puede mostrar y vender, y quita la marca de los que no. Los botones ✔ y ✖ de cada columna muestran u ocultan todos los productos de ese local.
+
+Un producto oculto en un local **no aparece en la tienda de ese local, no se puede comprar allí (ni con su QR) y sus promociones tampoco se muestran**. Su existencia no cambia, y los demás locales lo siguen viendo. En **Inventario**, cada producto avisa en qué locales no se ve, y al crear un pedido desde el panel solo se ofrece lo que ese local puede vender. Los productos nuevos se ven en todos los locales hasta que los ocultes.
 
 ## Corregir un precio mal cargado
 

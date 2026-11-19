@@ -162,7 +162,7 @@ function llenarSelectorVenta() {
 }
 function llenarProductosPedido() {
   const lid = $('npl').value || (madre() ? madre().id : ''), v = $('npp').value;
-  $('npp').innerHTML = prods.filter(p => disponibleEn(lid, p.id) > 0)
+  $('npp').innerHTML = prods.filter(p => disponibleEn(lid, p.id) > 0 && !(typeof estaOculto === 'function' && estaOculto(lid, p.id)))
     .map(p => `<option value="${p.id}">${esc(p.nombre)}${p.marca ? ' · ' + esc(p.marca) : ''} (${disponibleEn(lid, p.id)}) · ${money(p.precio)}</option>`).join('');
   if (v) $('npp').value = v;
 }

@@ -126,6 +126,7 @@ function renderProds() {
         <div class="mu">${esc(p.codigo)} · ${esc([p.marca, p.especificacion].filter(Boolean).join(' · '))}</div>
         <div>Precio ${money(p.precio)} · Costo ${money(p.costo)} · Margen ${marg}</div>
         <div>Existencia: <span class="${p.stock <= p.umbral ? 'low' : ''}">${p.stock}</span></div>
+        ${typeof etiquetaOculto === 'function' ? etiquetaOculto(p) : ''}
         <select data-cat="${p.id}" aria-label="Categoría" style="margin-top:6px;padding:6px;font-size:14px;width:auto">
           ${['snack', 'bebida', 'comida', 'otro'].map(k => `<option value="${k}" ${p.categoria === k ? 'selected' : ''}>${k[0].toUpperCase() + k.slice(1)}</option>`).join('')}
         </select>${typeof selectorGrupo === 'function' ? selectorGrupo(p) : ''}

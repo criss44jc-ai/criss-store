@@ -268,7 +268,8 @@ async function loadAccount() {
     return `<div class="line"><div>${esc(r.producto)}<div class="mu ${late ? 'late' : ''}">${late ? 'Vencido · ' : ''}${txt}</div></div><strong>× ${r.cantidad}</strong></div>`;
   }).join('') : '<span class="mu">No tienes productos pendientes.</span>';
 }
-$('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value); } catch (e) {} say('bm', ''); loadAccount(); tipCliente(); };
+$('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value); } catch (e) {} say('bm', ''); loadAccount(); tipCliente();
+  if (QR_PENDIENTE && $('cl').value) { const c = QR_PENDIENTE; QR_PENDIENTE = null; openSheet(c); } };
 
 /* ---------- Catálogo y promociones ---------- */
 let grupoSel = '';
@@ -359,6 +360,7 @@ async function loadPromos() {
   if (lid) q = q.or(`sucursal_id.is.null,sucursal_id.eq.${lid}`);
   let { data, error } = await q.order('id', { ascending: false }).limit(12);
   if (error) ({ data, error } = await sb.from('promos').select('titulo,texto,imagen_url,codigo').eq('activa', true).order('id', { ascending: false }).limit(12));
+  if (!error && data) data = data.filter(p => !p.codigo || !cat.length || cat.some(c => c.codigo === p.codigo));
   if (error || !data || !data.length) { $('promos').classList.add('hide'); clearInterval(promoTimer); return; }
   $('promos').classList.remove('hide');
   $('pstrip').innerHTML = data.map(p => {
@@ -412,10 +414,11 @@ function actualizaTotal() {
   $('stot').textContent = p != null ? money(p * qty) : '';
   $('stot').parentElement.classList.toggle('hide', p == null);
 }
+let QR_PENDIENTE = null;   // producto del QR que se abrirá cuando el cliente elija su nombre
 function openSheet(codigo) {
-  if (!$('cl').value) { say('bm', 'Primero elige tu nombre.', true); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (!$('cl').value) { QR_PENDIENTE = codigo; say('bm', 'Primero elige tu nombre y abrimos tu producto.', true); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   cur = cat.find(p => p.codigo === codigo);
-  if (!cur) { say('bm', 'Producto no encontrado: ' + codigo, true); return; }
+  if (!cur) { say('bm', 'Este producto no está disponible en este local.', true); return; }
   if (!cur.disponible) { say('bm', cur.nombre + ' está agotado.', true); return; }
   qty = 1; $('sq').textContent = 1; actualizaTotal();
   $('sn').textContent = cur.nombre;
@@ -538,7 +541,7 @@ $('scan').onclick = async () => {
           const c = codeOf(r[0].rawValue); const lm = /[?&]l=(\d+)/.exec(r[0].rawValue || '');
           if (c) {
             stopScan();
-            if (lm && Number(lm[1]) !== LOCAL) { LOCAL = Number(lm[1]); await loadLocalTienda(); await Promise.all([loadCatalog(), loadPromos()]); }
+            if (lm && Number(lm[1]) !== LOCAL) { LOCAL = Number(lm[1]); await loadLocalTienda(); await loadCatalog(); await loadPromos(); }
             openSheet(c);
           }
         }
@@ -717,7 +720,8 @@ montarMascota(modoInicial);
 try { const c = JSON.parse(localStorage.getItem('marca_' + (LOCAL || 0))); if (c) aplicarMarca(c); } catch (e) {}
 (async () => {
   await loadLocalTienda();
-  await Promise.all([loadClients(), loadCatalog(), loadPromos(), loadFrases(), loadModoMascota()]);
+  await Promise.all([loadClients(), loadCatalog(), loadFrases(), loadModoMascota()]);
+  await loadPromos();
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
   saludo();
