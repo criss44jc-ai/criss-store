@@ -112,6 +112,7 @@ input[type=color]{height:44px;padding:4px}
     <button data-t="cli">Clientes</button>
     <button data-t="loc">Locales</button>
     <button data-t="buz">Buzón</button>
+    <button data-t="jue">Juegos 🎮</button>
     <button data-t="mas">Más</button>
   </nav>
 </div></header>
@@ -446,6 +447,83 @@ input[type=color]{height:44px;padding:4px}
 </section>
 
 <!-- ============ MÁS ============ -->
+<section class="pane hide" id="t-jue">
+
+  <div class="card">
+    <h2>Encuestas 📝</h2>
+    <div class="mu">Preguntas cortas para conocer a tus clientes y premiarlos por participar. Si pides pedidos mínimos, la encuesta anima a pedir por la página.</div>
+    <label>Título</label><input id="en-tit" maxlength="60" placeholder="Ej: Cuéntanos qué te gusta">
+    <label>Descripción (opcional)</label><input id="en-des" maxlength="120">
+    <label>Premio por participar</label><input id="en-pre" maxlength="80" placeholder="Ej: Entras a la ruleta de un combo de sodas">
+    <div class="row">
+      <div><label>Pedidos mínimos para responder</label><input id="en-min" type="number" min="0" max="50" value="0"></div>
+      <div><label>Mostrar en</label><select id="en-loc"><option value="">Todos los locales</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Desde (opcional)</label><input id="en-ini" type="date"></div>
+      <div><label>Hasta (opcional)</label><input id="en-fin" type="date"></div>
+    </div>
+    <h3 style="font:700 16px var(--hd);margin:14px 0 4px">Preguntas de esta encuesta</h3>
+    <div id="en-qs"></div>
+    <div class="row">
+      <div><label>Nueva pregunta</label><input id="en-qp" maxlength="100" placeholder="Escribe la pregunta"></div>
+      <div><label>Tipo</label><select id="en-qt"><option value="opcion">Elegir una opción</option><option value="estrellas">Estrellas (1 a 5)</option><option value="texto">Texto libre</option></select></div>
+    </div>
+    <div id="en-qow"><label>Opciones (una por línea, de 2 a 6)</label><textarea id="en-qo" rows="3" placeholder="Naranja&#10;Uva&#10;Cola"></textarea></div>
+    <button class="btn sm" id="en-qadd" style="margin-top:10px">+ Agregar pregunta</button>
+    <button class="btn go" id="en-pub" style="width:100%">Publicar encuesta</button>
+    <div class="msg" id="en-msg"></div>
+    <div id="en-list" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Juegos 🎮</h2>
+    <div class="mu">El cliente juega desde la tienda. Los que ganan (y responden la encuesta, si la pones) entran a la ruleta, y la ruleta elige al azar a 1, 2 o 3 ganadores.</div>
+    <label>Título</label><input id="jg-tit" maxlength="60" placeholder="Ej: ¿Dónde está la mascota?">
+    <div class="row">
+      <div><label>Juego</label><select id="jg-tipo"><option value="vasos">🥤 ¿Dónde está la mascota? (vasos)</option><option value="memoria">🃏 Memoria (parejas)</option><option value="atrapa">🐾 Atrapa a la mascota</option></select></div>
+      <div><label>Dificultad</label><select id="jg-dif"><option value="facil">Fácil</option><option value="normal" selected>Normal</option><option value="dificil">Difícil</option></select></div>
+    </div>
+    <label>Premio</label><input id="jg-pre" maxlength="80" placeholder="Ej: Combo de 6 sodas">
+    <div class="row">
+      <div><label>Ganadores en la ruleta</label><select id="jg-gan"><option value="1">1 persona</option><option value="2">2 personas</option><option value="3">3 personas</option></select></div>
+      <div><label>Intentos por cliente</label><select id="jg-int"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Pedidos mínimos para jugar</label><input id="jg-min" type="number" min="0" max="50" value="0"></div>
+      <div><label>Encuesta después de jugar</label><select id="jg-enc"><option value="">Ninguna</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Mostrar en</label><select id="jg-loc"><option value="">Todos los locales</option></select></div>
+      <div><label>&nbsp;</label><div class="mu" id="jg-ayuda" style="padding-top:10px"></div></div>
+    </div>
+    <div class="row">
+      <div><label>Desde (opcional)</label><input id="jg-ini" type="date"></div>
+      <div><label>Hasta (opcional)</label><input id="jg-fin" type="date"></div>
+    </div>
+    <button class="btn go" id="jg-pub" style="width:100%">Publicar juego</button>
+    <div class="msg" id="jg-msg"></div>
+    <div id="jg-list" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ruleta 🎡</h2>
+    <div class="mu">Elige un juego o una encuesta y gira la ruleta: el servidor escoge al azar entre los participantes y deja anotados a los ganadores. El cliente ve su premio al entrar a la tienda.</div>
+    <label>¿De qué juego o encuesta?</label><select id="ru-sel"></select>
+    <label class="opt" style="display:flex;gap:10px;align-items:center;margin-top:10px"><input type="checkbox" id="ru-gan" checked style="width:auto"> Solo los que ganaron el juego</label>
+    <label class="opt" style="display:flex;gap:10px;align-items:center"><input type="checkbox" id="ru-res" checked style="width:auto"> Solo los que respondieron la encuesta del juego</label>
+    <label>Cuántos ganadores</label><select id="ru-n"><option value="">Los que definí en el juego</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+    <div class="tip" id="ru-part" style="margin-top:10px">Elige un juego o una encuesta.</div>
+    <div id="ru-rueda" style="max-width:320px;margin:10px auto"></div>
+    <button class="btn go" id="ru-girar" style="width:100%">🎡 Girar la ruleta</button>
+    <div id="ru-out" style="margin-top:8px"></div>
+    <div class="msg" id="ru-msg"></div>
+    <h3 style="font:700 16px var(--hd);margin:16px 0 4px">Sorteos hechos</h3>
+    <div id="ru-hist"></div>
+  </div>
+
+</section>
+
 <section class="pane hide" id="t-mas">
   <div class="card">
     <h2>Agregar cliente</h2>
@@ -519,6 +597,7 @@ input[type=color]{height:44px;padding:4px}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn go" id="pu-add">Publicar ventana</button>
       <button class="btn sm" id="pu-prev" style="margin-top:12px">Vista previa</button>
+      <button class="btn sm" id="pu-baraja" style="margin-top:12px">Ver la baraja</button>
     </div>
     <div class="msg" id="pu-msg"></div>
     <div id="pu-list" style="margin-top:6px"></div>
@@ -722,6 +801,7 @@ input[type=color]{height:44px;padding:4px}
 <script src="config.js"></script>
 <script src="mascota.js"></script>
 <script src="mascota-pixel.js"></script>
+<script src="baraja.js"></script>
 <script src="admin.js"></script>
 <script src="admin2.js"></script>
 <script src="admin3.js"></script>
@@ -732,5 +812,6 @@ input[type=color]{height:44px;padding:4px}
 <script src="admin8.js"></script>
 <script src="admin9.js"></script>
 <script src="admin10.js"></script>
+<script src="admin11.js"></script>
 </body>
 </html>

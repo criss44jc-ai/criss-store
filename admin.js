@@ -19,6 +19,7 @@ function tab(t) {
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('hide', p.id !== 't-' + t));
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   if (t === 'cli' && typeof loadClientes === 'function') loadClientes();
+  if (t === 'jue' && typeof loadJuegos === 'function') loadJuegos();
   if (t === 'loc' && typeof loadLocales === 'function') loadLocales();
   if (t === 'buz' && typeof loadBuzon === 'function') loadBuzon();
 }

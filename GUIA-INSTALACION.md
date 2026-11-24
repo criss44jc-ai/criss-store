@@ -7,14 +7,14 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | Archivo | Para qué sirve |
 |---|---|
 | `index.html` | La tienda que ven tus clientes |
-| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js` | Tu panel de administrador (se abre en `/admin.html`) |
+| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `admin11.js`, `baraja.js`, `juegos.js` | Tu panel de administrador (se abre en `/admin.html`) |
 | `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
 | `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
 | `mascota-pixel.js` y `mascota-pixel-alegre.gif`, `-canta.gif`, `-asoma.gif`, `-reposo.gif` | **La mascota pixelada animada**, de 64 × 64 píxeles y mostrada a 128 px (la tienda necesita los 5 archivos) |
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v20.sql` | La base de datos, en 20 partes |
+| `supabase.sql` a `supabase_v21.sql` | La base de datos, en 21 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con veinte columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`, `supabase_v20.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con veintiuna columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`, `supabase_v20.sql`, `supabase_v21.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las veinte columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las veintiuna columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -42,7 +42,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `admin11.js`, `baraja.js`, `juegos.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -88,6 +88,27 @@ En `/admin.html` → **Locales**:
 - **Pedido desde el panel:** al crear un pedido para un cliente eliges de qué local sale.
 - **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
 - Si anulas un pedido, la mercancía vuelve al local de donde salió.
+
+## Ventanas emergentes en baraja
+
+Si tienes **más de una** ventana de propaganda vigente, el cliente las ve como una **baraja**: las cartas apiladas, una tras otra. Se pasa a la siguiente deslizando con el dedo, con las flechas ‹ › o con el teclado; los puntos y el contador (2 / 4) muestran cuántas hay. La tienda recibe hasta **6** vigentes, de la más nueva a la más vieja. Cada carta respeta su propia frecuencia (una vez al día, cada vez, o una sola vez). Con una sola ventana se ve como antes. En **Más → Ventana emergente de propaganda**, el botón **Ver la baraja** te muestra cómo quedan todas las vigentes.
+
+## Encuestas con premio
+
+En `/admin.html` → **Juegos 🎮 → Encuestas** armas preguntas cortas (hasta 6): **elegir una opción**, **estrellas de 1 a 5** o **texto libre**. Pones el premio por participar, los **pedidos mínimos** para poder responder (esto anima a pedir por la página: "haz 2 pedidos más para responder"), el local y las fechas. Cada cliente responde **una sola vez**. En **Resultados** ves los porcentajes por opción, el promedio de estrellas y los comentarios con el nombre de quien los escribió.
+
+## Juegos y ruleta
+
+En **Juegos 🎮 → Juegos** publicas un juego para tus clientes. Hay tres:
+- 🥤 **¿Dónde está la mascota?** Los vasos se mezclan y hay que adivinar bajo cuál quedó la mascota.
+- 🃏 **Memoria.** Encontrar las 6 parejas con pocos movimientos.
+- 🐾 **Atrapa a la mascota.** Tocarla las veces necesarias en 15 segundos.
+
+Eliges la **dificultad**, el **premio**, cuántas personas ganan en la ruleta (**1, 2 o 3**), los **intentos** por cliente, los **pedidos mínimos** para jugar, una **encuesta para responder después de jugar** (opcional), el local y las fechas. El cliente juega desde **☰ → Juegos y premios** o desde el aviso amarillo de la tienda.
+
+En **Ruleta 🎡** eliges el juego (o una encuesta), decides si entran **solo los que ganaron** y **solo los que respondieron la encuesta**, y giras. El **servidor** escoge al azar a los ganadores, la rueda solo lo muestra, y queda anotado en **Sorteos hechos**, donde marcas cada premio como **entregado**. Quien ya ganó en un juego no vuelve a entrar en su siguiente giro. El cliente ve un aviso **"¡Ganaste en la ruleta!"** la próxima vez que abre la tienda, y sus premios en el panel de juegos.
+
+**Seguridad:** en los vasos el servidor decide cómo se mezcla y revisa la respuesta; en memoria y atrapa revisa que el resultado sea posible (tiempo, movimientos y toques). Aun así, ganar un juego solo da entrada a la ruleta: el ganador final lo decide el azar del servidor.
 
 ## Avatar del cliente
 

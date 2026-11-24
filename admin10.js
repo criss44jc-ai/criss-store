@@ -70,23 +70,13 @@ $('pu-dest').onchange = () => {
   if ($('pu-dest').value === 'prod') llenarSelectoresPopup();
 };
 
-// ventana de vista previa (igual a la que ve el cliente)
-function vistaPopup(p) {
-  const yt = ytIdP(p.video_externo), ov = document.createElement('div');
-  ov.className = 'sheet'; ov.style.cssText = 'z-index:60;align-items:center;padding:16px';
-  const media = p.video_url ? `<video src="${esc(p.video_url)}" muted loop playsinline controls autoplay style="width:100%;display:block;max-height:60vh;background:#000"></video>`
-    : yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${yt}?playsinline=1&rel=0" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;border:0"></iframe>`
-    : p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="" style="width:100%;display:block">` : '';
-  const txtBtn = p.boton_texto || (p.codigo || p.enlace ? 'Ver más' : '');
-  ov.innerHTML = `<div style="position:relative;max-width:420px;border-radius:18px;padding:0;overflow:auto;max-height:92vh">
-    <button data-x style="position:absolute;top:8px;right:8px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(18,38,58,.78);color:#fff;font-size:22px;cursor:pointer">×</button>
-    ${media}<div style="padding:16px"><h2 style="margin:0 0 6px">${esc(p.titulo)}</h2>
-    <div class="mu" style="font-size:15px;white-space:pre-line">${esc(p.texto || '')}</div>
-    ${txtBtn ? `<button class="btn go" data-x style="width:100%">${esc(txtBtn)}</button>` : ''}
-    <div class="mu" style="margin-top:8px;text-align:center">Vista previa: así la verá el cliente</div></div></div>`;
-  ov.onclick = e => { if (e.target === ov || e.target.closest('[data-x]')) ov.remove(); };
-  document.body.appendChild(ov);
-}
+// vista previa: la misma baraja que ve el cliente
+function vistaPopup(p) { bjMostrar([p], { z: 60 }); }
+$('pu-baraja').onclick = () => {
+  const vig = popups.filter(p => estadoPopup(p)[0] === 'Activa').slice(0, 6);
+  if (!vig.length) { say('pu-msg', 'No hay ventanas activas para mostrar en la baraja.', true); return; }
+  say('pu-msg', ''); bjMostrar(vig, { z: 60 });
+};
 function lecturaFormularioPopup() {
   const f = $('pu-img').files[0], dest = $('pu-dest').value;
   return {

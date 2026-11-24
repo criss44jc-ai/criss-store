@@ -98,12 +98,6 @@ textarea{width:100%;padding:11px;border:1px solid var(--ln);border-radius:9px;ba
 .avcol{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .avcol button{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--ln);cursor:pointer}
 .avcol button.on{box-shadow:0 0 0 3px var(--ink)}
-#popup{align-items:center;z-index:9;padding:16px}
-#popup>div{position:relative;max-width:420px;border-radius:18px;padding:0;overflow:auto;max-height:92vh}
-#popx{position:absolute;top:8px;right:8px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:rgba(18,38,58,.78);color:#fff;font-size:22px;line-height:1;cursor:pointer}
-#popmedia img,#popmedia video{width:100%;display:block;max-height:60vh;object-fit:contain;background:#000}
-#popmedia img{background:#fff;object-fit:cover;max-height:none}
-#popmedia iframe{width:100%;aspect-ratio:16/9;display:block;border:0}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--ink);background:#f9d55b;object-fit:cover;flex:none}
 .slogan{font-weight:700;font-size:14px;margin-top:4px}
@@ -189,15 +183,6 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
   <div class="msg" id="avmsg"></div>
 </div></div>
 
-<div id="popup" class="sheet hide"><div>
-  <button id="popx" aria-label="Cerrar">×</button>
-  <div id="popmedia"></div>
-  <div style="padding:16px">
-    <h2 id="poptit" style="margin:0 0 6px"></h2>
-    <div id="poptxt" class="mu" style="font-size:15px;white-space:pre-line"></div>
-    <button class="btn go hide" id="popbtn" style="width:100%"></button>
-  </div>
-</div></div>
 
 <div id="bzsheet" class="sheet hide"><div>
   <h2>💬 Sugerencias y reclamos</h2>
@@ -252,6 +237,8 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <script src="config.js"></script>
 <script src="mascota.js"></script>
 <script src="mascota-pixel.js"></script>
+<script src="baraja.js"></script>
+<script src="juegos.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -294,7 +281,7 @@ async function loadClients() {
   $('cl').innerHTML = '<option value="">Elige tu nombre</option>' +
     clientes.map(c => `<option value="${c.id}">${c.id} · ${esc(c.nombre)}</option>`).join('');
   try { const s = localStorage.getItem('cliente'); if (s && clientes.some(c => c.id === s)) $('cl').value = s; } catch (e) {}
-  loadAccount(); cargarAvatar();
+  loadAccount(); cargarAvatar(); jgCargar();
 }
 const nombreDe = id => (clientes.find(c => c.id === id) || {}).nombre || id;
 
@@ -312,7 +299,7 @@ async function loadAccount() {
     return `<div class="line"><div>${esc(r.producto)}<div class="mu ${late ? 'late' : ''}">${late ? 'Vencido · ' : ''}${txt}</div></div><strong>× ${r.cantidad}</strong></div>`;
   }).join('') : '<span class="mu">No tienes productos pendientes.</span>';
 }
-$('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value); } catch (e) {} say('bm', ''); loadAccount(); cargarAvatar(); tipCliente();
+$('cl').onchange = () => { try { localStorage.setItem('cliente', $('cl').value); } catch (e) {} say('bm', ''); loadAccount(); cargarAvatar(); jgCargar(); tipCliente();
   if (QR_PENDIENTE && $('cl').value) { const c = QR_PENDIENTE; QR_PENDIENTE = null; openSheet(c); } };
 
 /* ---------- Catálogo y promociones ---------- */
@@ -378,6 +365,7 @@ function renderMenu(secs) {
     '<div class="sdiv"></div>' +
     (!$('promos').classList.contains('hide') ? '<button class="sitem" data-go="promos"><span>🎁 Promociones</span></button>' : '') +
     '<button class="sitem" data-go="cuenta"><span>🧾 Mi cuenta</span></button>' +
+    (typeof jgPendientes === 'function' && jgPendientes() > 0 ? '<button class="sitem" data-go="juegos"><span>🎮 Juegos y premios</span><small class="cnt">' + jgPendientes() + '</small></button>' : '') +
     (MASC_PUEDE ? '<button class="sitem" data-go="mascota"><span>🐾 Mascota: volver a su lugar</span></button>' : '') +
     '<button class="sitem" data-go="buzon"><span>💬 Sugerencias y reclamos</span></button>';
 }
@@ -393,6 +381,7 @@ $('sidenav').onclick = e => {
     if (go.dataset.go === 'cuenta') $('acc').scrollIntoView({ behavior: 'smooth', block: 'center' });
     if (go.dataset.go === 'buzon') $('bzabrir').click();
     if (go.dataset.go === 'mascota') restablecerMascota();
+    if (go.dataset.go === 'juegos') jgAbrirPanel();
   }
 };
 $('chips').onclick = e => { const b = e.target.closest('[data-g]'); if (b) { grupoSel = b.dataset.g; renderCatalogo(); } };
@@ -854,36 +843,24 @@ $('avok').onclick = async () => {
   habla('¡Qué buen avatar, {cliente}! 😎');
 };
 
-/* ---------- Ventana emergente de propaganda (la define el administrador) ---------- */
+/* ---------- Ventanas emergentes de propaganda: si hay varias, se ven como una baraja ---------- */
 async function mostrarPopup() {
   const { data, error } = await sb.rpc('popup_tienda', { p_sucursal: LOCINFO ? LOCINFO.id : LOCAL });
-  const p = !error && data && data[0]; if (!p) return;
-  const k = 'pop_' + p.id, hoy = new Date().toLocaleDateString('en-CA');
-  let visto = null; try { visto = localStorage.getItem(k); } catch (e) {}
-  if ((p.frecuencia === 'una_vez' && visto) || (p.frecuencia === 'dia' && visto === hoy)) return;
-  const yt = ytId(p.video_externo);
-  $('popmedia').innerHTML = p.video_url ? `<video src="${esc(p.video_url)}" muted loop playsinline controls autoplay></video>`
-    : yt ? `<iframe src="https://www.youtube-nocookie.com/embed/${yt}?playsinline=1&rel=0" allow="encrypted-media; picture-in-picture" allowfullscreen title="${esc(p.titulo)}"></iframe>`
-    : p.imagen_url ? `<img src="${esc(p.imagen_url)}" alt="">` : '';
-  $('poptit').textContent = p.titulo; $('poptxt').textContent = p.texto || '';
-  const btn = $('popbtn'), accion = p.codigo ? 'prod' : (p.enlace ? 'url' : ''), txt = p.boton_texto || (accion ? 'Ver más' : '');
-  btn.textContent = txt; btn.classList.toggle('hide', !txt); btn.dataset.accion = accion;
-  btn.dataset.codigo = p.codigo || ''; btn.dataset.enlace = p.enlace || '';
+  if (error || !data || !data.length) return;
+  const hoy = new Date().toLocaleDateString('en-CA');
+  const lista = data.filter(p => {
+    let visto = null; try { visto = localStorage.getItem('pop_' + p.id); } catch (e) {}
+    return !((p.frecuencia === 'una_vez' && visto) || (p.frecuencia === 'dia' && visto === hoy));
+  });
+  if (!lista.length) return;
   setTimeout(() => {
-    $('popup').classList.remove('hide');
-    try { localStorage.setItem(k, p.frecuencia === 'una_vez' ? '1' : hoy); } catch (e) {}
+    bjMostrar(lista, { z: 9, onAccion: c => {
+      if (c.codigo) openSheet(c.codigo);
+      else if (/^https?:\/\//i.test(c.enlace || '')) window.open(c.enlace, '_blank', 'noopener');
+    } });
+    lista.forEach(p => { try { localStorage.setItem('pop_' + p.id, p.frecuencia === 'una_vez' ? '1' : hoy); } catch (e) {} });
   }, 1200);
 }
-const cerrarPopup = () => { $('popup').classList.add('hide'); $('popmedia').innerHTML = ''; };
-$('popx').onclick = cerrarPopup;
-$('popup').onclick = e => { if (e.target === $('popup')) cerrarPopup(); };
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('popup').classList.contains('hide')) cerrarPopup(); });
-$('popbtn').onclick = () => {
-  const b = $('popbtn'), a = b.dataset.accion, cod = b.dataset.codigo, url = b.dataset.enlace;
-  cerrarPopup();
-  if (a === 'prod' && cod) openSheet(cod);
-  else if (a === 'url' && /^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
-};
 
 /* ---------- Sugerencias y reclamos ---------- */
 $('bzabrir').onclick = () => { $('bztxt').value = ''; say('bzst', ''); $('bzsheet').classList.remove('hide'); };
@@ -907,9 +884,11 @@ montarMascota(modoInicial);
 try { const c = JSON.parse(localStorage.getItem('marca_' + (LOCAL || 0))); if (c) aplicarMarca(c); } catch (e) {}
 (async () => {
   await loadLocalTienda();
+  jgMontar();
   await Promise.all([loadClients(), loadCatalog(), loadFrases(), loadModoMascota()]);
   await loadPromos();
   loadConfigTienda();
+  jgCargar();
   mostrarPopup();
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
