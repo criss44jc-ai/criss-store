@@ -44,6 +44,7 @@ async function loadAll() {
   if (typeof loadCurva === 'function') loadCurva();
   if (typeof loadCambiosNombre === 'function') loadCambiosNombre();
   if (typeof loadCorrecciones === 'function') loadCorrecciones();
+  if (typeof loadPopups === 'function') loadPopups();
   if (typeof loadBuzon === 'function') loadBuzon();
   if (typeof loadExtras === 'function') loadExtras();
   if (typeof loadReports === 'function') loadReports();

@@ -7,14 +7,14 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | Archivo | Para qué sirve |
 |---|---|
 | `index.html` | La tienda que ven tus clientes |
-| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js` | Tu panel de administrador (se abre en `/admin.html`) |
+| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js` | Tu panel de administrador (se abre en `/admin.html`) |
 | `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
 | `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
 | `mascota-pixel.js` y `mascota-pixel-alegre.gif`, `-canta.gif`, `-asoma.gif`, `-reposo.gif` | **La mascota pixelada animada**, de 64 × 64 píxeles y mostrada a 128 px (la tienda necesita los 5 archivos) |
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v19.sql` | La base de datos, en 19 partes |
+| `supabase.sql` a `supabase_v20.sql` | La base de datos, en 20 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con diecinueve columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con veinte columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`, `supabase_v20.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las diecinueve columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las veinte columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -42,7 +42,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -88,6 +88,20 @@ En `/admin.html` → **Locales**:
 - **Pedido desde el panel:** al crear un pedido para un cliente eliges de qué local sale.
 - **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
 - Si anulas un pedido, la mercancía vuelve al local de donde salió.
+
+## Avatar del cliente
+
+Cuando el cliente elige su nombre, aparece su avatar con el botón **Elegir avatar**. Puede escoger entre 58 imágenes (caras, animales, comida, deportes…) y un color de fondo. Se guarda en su perfil y lo ves en el panel junto a su nombre. Si tú le pones una foto o un avatar en **Clientes**, el tuyo se usa primero.
+
+## La mascota se mueve por toda la pantalla
+
+La mascota ya no está anclada: el cliente la **arrastra con el dedo o el mouse** a cualquier lugar y la tienda recuerda dónde la dejó en ese teléfono. Un toque sin arrastrar la hace hablar como siempre. El globo de texto cambia de lado según dónde esté para no salirse de la pantalla. En el menú lateral hay un botón **Mascota: volver a su lugar**.
+
+Tú decides dónde aparece al principio: en `/admin.html` → **Más → Mascota de la tienda → Dónde aparece la mascota**, arrastra la mascota dentro de la pantalla de ejemplo y pulsa **Guardar posición**. También puedes quitar la casilla **Los clientes pueden mover la mascota** si prefieres dejarla fija en el lugar que elegiste.
+
+## Ventana emergente de propaganda
+
+En **Más → Ventana emergente de propaganda 📣** creas una ventana que sale sobre la tienda cuando el cliente entra. Puede llevar título, texto, una **imagen**, un **video** o un enlace de **YouTube**, y un botón que abre un producto, abre un enlace o solo cierra. Eliges en qué local sale (o en todos), **cuántas veces** (una vez al día por cliente, cada vez que entra, o una sola vez) y fechas opcionales de inicio y fin. **Vista previa** te muestra cómo la verá el cliente. Cada ventana se puede pausar, activar o quitar. Si hay varias vigentes, sale la más reciente.
 
 ## Qué ve cada local
 

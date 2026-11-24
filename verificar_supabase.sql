@@ -28,4 +28,5 @@ select
   to_regclass('public.buzon') is not null and to_regclass('public.grupos') is not null     as "supabase_v16.sql",
   to_regclass('public.cambios_nombre') is not null                                         as "supabase_v17.sql",
   to_regclass('public.correcciones') is not null                                           as "supabase_v18.sql",
-  to_regclass('public.producto_oculto') is not null                                        as "supabase_v19.sql";
+  to_regclass('public.producto_oculto') is not null                                        as "supabase_v19.sql",
+  to_regclass('public.popups') is not null                                                 as "supabase_v20.sql";

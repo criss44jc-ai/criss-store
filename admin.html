@@ -476,6 +476,52 @@ input[type=color]{height:44px;padding:4px}
     <div id="mprev" style="width:128px;height:128px;margin-top:10px"></div>
     <button class="btn go" id="msv">Guardar</button>
     <div class="msg" id="mmsg"></div>
+
+    <h3 style="font:700 16px var(--hd);margin:18px 0 4px">Dónde aparece la mascota</h3>
+    <div class="mu">Arrastra la mascota dentro de la pantalla de ejemplo para elegir dónde aparece cuando el cliente abre la tienda. Los clientes también pueden moverla donde quieran.</div>
+    <div id="mpos" style="position:relative;width:150px;height:270px;margin:10px auto;border:3px solid var(--ink);border-radius:22px;background:#f4f6f9;overflow:hidden;touch-action:none">
+      <div style="position:absolute;left:0;right:0;top:0;height:36px;background:#ffd23f"></div>
+      <div style="position:absolute;left:10px;right:10px;top:50px;height:46px;background:#fff;border:1px solid var(--ln);border-radius:8px"></div>
+      <div style="position:absolute;left:10px;right:10px;top:106px;height:46px;background:#fff;border:1px solid var(--ln);border-radius:8px"></div>
+      <div style="position:absolute;left:10px;right:10px;top:162px;height:46px;background:#fff;border:1px solid var(--ln);border-radius:8px"></div>
+      <div id="mposav" style="position:absolute;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:#ffd23f;overflow:hidden;cursor:grab;touch-action:none;box-shadow:0 3px 8px rgba(0,0,0,.3)"><img src="mascota.png" alt="" style="width:100%;height:100%;object-fit:cover;pointer-events:none"></div>
+    </div>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mpm" checked> Los clientes pueden mover la mascota</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn go" id="mpsv">Guardar posición</button>
+      <button class="btn sm" id="mprs" style="margin-top:12px">Volver abajo a la izquierda</button>
+    </div>
+    <div class="msg" id="mpmsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Ventana emergente de propaganda 📣</h2>
+    <div class="mu">Sale encima de la tienda cuando el cliente entra. Úsala para una promoción, un aviso o una imagen. Puedes tener varias y pausarlas; se muestra la más reciente que esté vigente.</div>
+    <label>Título</label><input id="pu-tit" maxlength="60" placeholder="Ej: ¡Fin de semana de 2x1!">
+    <label>Texto (opcional)</label><textarea id="pu-txt" rows="2" maxlength="300"></textarea>
+    <label>Imagen (opcional)</label><input id="pu-img" type="file" accept="image/*">
+    <label>Video (opcional, hasta 50 MB)</label><input id="pu-vid" type="file" accept="video/mp4,video/webm,video/quicktime">
+    <label>o enlace de YouTube (opcional)</label><input id="pu-yt" placeholder="https://youtu.be/…">
+    <div class="row">
+      <div><label>Texto del botón</label><input id="pu-bt" maxlength="30" placeholder="Ej: ¡Lo quiero!"></div>
+      <div><label>El botón lleva a</label><select id="pu-dest"><option value="">Solo cierra la ventana</option><option value="prod">Un producto</option><option value="url">Un enlace</option></select></div>
+    </div>
+    <div id="pu-prodw" class="hide"><label>Producto</label><select id="pu-prod"></select></div>
+    <div id="pu-urlw" class="hide"><label>Enlace</label><input id="pu-url" placeholder="https://…"></div>
+    <div class="row">
+      <div><label>Mostrar en</label><select id="pu-loc"><option value="">Todos los locales</option></select></div>
+      <div><label>Cuántas veces</label><select id="pu-frec"><option value="dia">Una vez al día por cliente</option><option value="siempre">Cada vez que entra</option><option value="una_vez">Solo una vez por cliente</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Desde (opcional)</label><input id="pu-ini" type="date"></div>
+      <div><label>Hasta (opcional)</label><input id="pu-fin" type="date"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn go" id="pu-add">Publicar ventana</button>
+      <button class="btn sm" id="pu-prev" style="margin-top:12px">Vista previa</button>
+    </div>
+    <div class="msg" id="pu-msg"></div>
+    <div id="pu-list" style="margin-top:6px"></div>
   </div>
 
   <div class="card">
@@ -685,5 +731,6 @@ input[type=color]{height:44px;padding:4px}
 <script src="admin7.js"></script>
 <script src="admin8.js"></script>
 <script src="admin9.js"></script>
+<script src="admin10.js"></script>
 </body>
 </html>

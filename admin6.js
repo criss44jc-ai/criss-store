@@ -47,6 +47,7 @@ function extrasLocales() {
   const vt = $('tloc').value; $('tloc').innerHTML = '<option value="">En todos los locales</option>' + o; if (vt && locales.some(l => l.id == vt)) $('tloc').value = vt;
   if (typeof llenarLocalesCurva === 'function') llenarLocalesCurva();
   if (typeof loadOcultos === 'function') loadOcultos();
+  if (typeof llenarSelectoresPopup === 'function') llenarSelectoresPopup();
   if (!$('t-loc').classList.contains('hide')) cargarInvDia();
 }
 

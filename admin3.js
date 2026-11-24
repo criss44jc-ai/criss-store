@@ -12,6 +12,7 @@ function avatarHtml(id, grande) {
   const p = perfiles[id] || {}, cls = 'av' + (grande ? ' g' : '');
   if (p.avatar_url) return `<img class="${cls}" src="${esc(p.avatar_url)}" alt="">`;
   if (p.avatar) return `<div class="${cls}" style="background:${colorDe(id)}33">${esc(p.avatar)}</div>`;
+  if (p.avatar_cliente) return `<div class="${cls}" style="background:${esc(p.avatar_color || colorDe(id) + '33')}">${esc(p.avatar_cliente)}</div>`;
   return `<div class="${cls}" style="background:${colorDe(id)}">${esc((nombreDe(id) || '?').charAt(0).toUpperCase())}</div>`;
 }
 function diasParaCumple(c) {
@@ -27,7 +28,7 @@ function diasParaCumple(c) {
 async function loadClientes() {
   const [r, p, rg, pr] = await Promise.all([
     sb.rpc('resumen_clientes'),
-    sb.from('perfiles').select('cliente_id,avatar,avatar_url,cumple,telefono,correo'),
+    sb.from('perfiles').select('*'),
     sb.from('reglas_premio').select('*').eq('activa', true).order('id'),
     sb.from('premios').select('*').order('id', { ascending: false }).limit(300)
   ]);
@@ -126,6 +127,7 @@ function renderPerfil() {
           ${p.avatar_url ? '<button class="btn sm" id="pf-quitar" style="margin:0">Quitar foto</button>' : ''}
         </div></div></div>
     <details><summary>Elegir un avatar</summary><div class="emoji">${AVATARES.map(e => `<button data-emo="${e}">${e}</button>`).join('')}</div></details>
+    ${p.avatar_cliente ? `<div class="mu" style="margin-top:6px">Avatar que eligió el cliente: <b>${esc(p.avatar_cliente)}</b>. Se usa mientras tú no le pongas una foto o un avatar.</div>` : ''}
 
     <div class="stats">
       ${stat(money(a.total), 'Comprado')}${stat(a.pedidos, 'Pedidos')}${stat(money(a.ticket), 'Ticket promedio')}

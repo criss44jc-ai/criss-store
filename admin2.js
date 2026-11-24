@@ -182,6 +182,7 @@ async function loadExtras() {
   showPago();
   $('mm').value = ['imagen', 'pixel'].includes(ajustes.mascota_modo) ? ajustes.mascota_modo : 'animada';
   verMascota();
+  if (typeof cargarPosMascota === 'function') cargarPosMascota();
   $('fp').innerHTML = '<option value="">Ninguno</option>' + prods.map(p => `<option value="${esc(p.codigo)}">${esc(p.nombre)}</option>`).join('');
   const MOM = { entrada: 'Al entrar', compra: 'Tras una compra', azar: 'Al tocarla' };
   $('flist').innerHTML = fr.error ? '<div class="mu" style="margin-top:8px">Falta ejecutar supabase_v8.sql en Supabase.</div>'
