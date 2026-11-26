@@ -89,6 +89,10 @@ En `/admin.html` → **Locales**:
 - **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
 - Si anulas un pedido, la mercancía vuelve al local de donde salió.
 
+## App en el celular y en la Mac
+
+Tu tienda y tu panel se pueden **instalar como app** en Android, iPhone y Mac (gratis, sin tiendas de aplicaciones). Lee **`GUIA-APP-MOVIL.md`**: ahí están los pasos para cada aparato, los archivos nuevos que debes subir (`manifest.webmanifest`, `manifest-admin.webmanifest`, `sw.js`, `instalar.js`, `vercel.json` y los íconos `icono-*.png` y `apple-touch-icon*.png`) y cómo publicarla en Google Play o la App Store si algún día lo quieres.
+
 ## Ventanas emergentes en baraja
 
 Si tienes **más de una** ventana de propaganda vigente, el cliente las ve como una **baraja**: las cartas apiladas, una tras otra. Se pasa a la siguiente deslizando con el dedo, con las flechas ‹ › o con el teclado; los puntos y el contador (2 / 4) muestran cuántas hay. La tienda recibe hasta **6** vigentes, de la más nueva a la más vieja. Cada carta respeta su propia frecuencia (una vez al día, cada vez, o una sola vez). Con una sola ventana se ve como antes. En **Más → Ventana emergente de propaganda**, el botón **Ver la baraja** te muestra cómo quedan todas las vigentes.

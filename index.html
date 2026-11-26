@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CRISS’ STORE</title>
 <link rel="icon" type="image/png" href="mascota.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ffd23f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CRISS’ STORE">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -120,7 +127,8 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
-<body>
+<body data-instalar-banner>
+<div id="sab" style="position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none"></div>
 <div id="sidebg" class="sidebg hide"></div>
 <aside id="side" class="side" aria-label="Secciones de la tienda">
   <div class="sidehd"><span>Secciones</span><button class="sidex" id="sideX" aria-label="Cerrar el menú">×</button></div>
@@ -237,6 +245,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <script src="config.js"></script>
 <script src="mascota.js"></script>
 <script src="mascota-pixel.js"></script>
+<script src="instalar.js"></script>
 <script src="baraja.js"></script>
 <script src="juegos.js"></script>
 <script>
@@ -247,7 +256,12 @@ const say = (id, t, err) => { const e = $(id); e.textContent = t; e.classList.to
 const codeOf = t => { const r = /P-\d+/i.exec(String(t)); return r ? r[0].toUpperCase() : null; };
 const ddmm = d => d.toLocaleDateString('es', { day: '2-digit', month: '2-digit' });
 const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-let LOCAL = (() => { const v = parseInt(new URLSearchParams(location.search).get('l'), 10); return v > 0 ? v : null; })();
+let LOCAL = (() => {
+  const v = parseInt(new URLSearchParams(location.search).get('l'), 10);
+  if (v > 0) { try { localStorage.setItem('local_guardado', String(v)); } catch (e) {} return v; }
+  if (typeof instEsApp === 'function' && instEsApp()) { try { const g = parseInt(localStorage.getItem('local_guardado'), 10); if (g > 0) return g; } catch (e) {} }
+  return null;
+})();
 let LOCINFO = null;
 function aplicarMarca(l) {
   const r = document.documentElement.style, hex = c => /^#[0-9a-f]{6}$/i.test(c || '') ? c : null;
@@ -255,6 +269,7 @@ function aplicarMarca(l) {
   const luz = c => { const n = parseInt(c.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
   if (enc) { r.setProperty('--ban', enc); r.setProperty('--hdtx', luz(enc) > 0.6 ? '#12263a' : '#ffffff'); } else { r.removeProperty('--ban'); r.removeProperty('--hdtx'); }
   if (acc) r.setProperty('--ok', acc); else r.removeProperty('--ok');
+  const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.content = enc || '#ffd23f';
   const titulo = (l && l.titulo) || 'CRISS’ STORE';
   $('ttl').textContent = titulo; document.title = titulo;
   $('slg').textContent = (l && l.eslogan) || '¡Come sin remordimientos! 😋';
@@ -366,6 +381,7 @@ function renderMenu(secs) {
     (!$('promos').classList.contains('hide') ? '<button class="sitem" data-go="promos"><span>🎁 Promociones</span></button>' : '') +
     '<button class="sitem" data-go="cuenta"><span>🧾 Mi cuenta</span></button>' +
     (typeof jgPendientes === 'function' && jgPendientes() > 0 ? '<button class="sitem" data-go="juegos"><span>🎮 Juegos y premios</span><small class="cnt">' + jgPendientes() + '</small></button>' : '') +
+    (typeof instEsApp === 'function' && !instEsApp() ? '<button class="sitem" data-go="instalar"><span>📲 Instalar la app</span></button>' : '') +
     (MASC_PUEDE ? '<button class="sitem" data-go="mascota"><span>🐾 Mascota: volver a su lugar</span></button>' : '') +
     '<button class="sitem" data-go="buzon"><span>💬 Sugerencias y reclamos</span></button>';
 }
@@ -382,6 +398,7 @@ $('sidenav').onclick = e => {
     if (go.dataset.go === 'buzon') $('bzabrir').click();
     if (go.dataset.go === 'mascota') restablecerMascota();
     if (go.dataset.go === 'juegos') jgAbrirPanel();
+    if (go.dataset.go === 'instalar') instInstalar();
   }
 };
 $('chips').onclick = e => { const b = e.target.closest('[data-g]'); if (b) { grupoSel = b.dataset.g; renderCatalogo(); } };
@@ -742,7 +759,7 @@ function mascPosGuardada() {
   try { const j = JSON.parse(localStorage.getItem('mascotaPos') || 'null'); return j && isFinite(j.x) && isFinite(j.y) ? j : null; } catch (e) { return null; }
 }
 function aplicarPosMascota(px) {
-  const m = $('mascota'), w = m.offsetWidth || 80, h = m.offsetHeight || 80, vw = window.innerWidth, vh = window.innerHeight;
+  const m = $('mascota'), w = m.offsetWidth || 80, h = m.offsetHeight || 80, vw = window.innerWidth, vh = window.innerHeight - ($('sab').offsetHeight || 0);
   let left, top;
   if (px) { left = px.left; top = px.top; }
   else {

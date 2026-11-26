@@ -6,6 +6,13 @@
 <meta name="robots" content="noindex">
 <title>CRISS’ STORE · Administrador</title>
 <link rel="icon" type="image/png" href="mascota.png">
+<link rel="manifest" href="manifest-admin.webmanifest">
+<meta name="theme-color" content="#ffd23f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CRISS’ Admin">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon-admin.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -525,6 +532,11 @@ input[type=color]{height:44px;padding:4px}
 </section>
 
 <section class="pane hide" id="t-mas">
+  <div class="card" id="inst-card" data-instalar-oculto>
+    <h2>📲 Instalar el panel como app</h2>
+    <div class="mu">Instálalo en tu celular (Android o iPhone) o en tu Mac para abrirlo con un toque, en pantalla completa y con su propio ícono.</div>
+    <button class="btn go" data-instalar style="width:100%;margin-top:10px">Instalar la app</button>
+  </div>
   <div class="card">
     <h2>Agregar cliente</h2>
     <label>Nombre</label><input id="cn" placeholder="Nombre del cliente">
@@ -801,6 +813,7 @@ input[type=color]{height:44px;padding:4px}
 <script src="config.js"></script>
 <script src="mascota.js"></script>
 <script src="mascota-pixel.js"></script>
+<script src="instalar.js"></script>
 <script src="baraja.js"></script>
 <script src="admin.js"></script>
 <script src="admin2.js"></script>

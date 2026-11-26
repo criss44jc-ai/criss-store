@@ -29,3 +29,8 @@ Control de compras, cobros e inventario en línea. Sitio estático (sin compilar
 ## Guía paso a paso
 
 Lee `GUIA-INSTALACION.md`. Para saber qué partes de la base de datos ya ejecutaste, corre `verificar_supabase.sql`.
+
+
+## App instalable
+
+`manifest.webmanifest`, `manifest-admin.webmanifest`, `sw.js`, `instalar.js`, `vercel.json` e íconos: convierten la tienda y el panel en apps instalables (Android, iPhone, Mac). Ver `GUIA-APP-MOVIL.md`. La carpeta `app-nativa` (en `criss-store-app-nativa.zip`) es una plantilla Capacitor para publicar en Google Play y App Store.
