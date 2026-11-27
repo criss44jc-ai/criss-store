@@ -151,7 +151,8 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
     <div id="miav" class="hide" style="display:flex;align-items:center;gap:10px;margin-top:10px">
       <div id="miavc" class="avc"></div>
       <div style="flex:1;min-width:0"><b id="miavn"></b><div class="mu">Tu avatar</div></div>
-      <button class="btn sm" id="avbtn">Elegir avatar</button>
+      <button class="btn sm go" id="pfbtn">Mi perfil</button>
+      <button class="btn sm" id="avbtn">Avatar</button>
     </div>
     <button class="btn" id="scan">Escanear QR del producto</button>
     <video id="vid" class="hide" playsinline muted></video>
@@ -170,7 +171,8 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
   <div class="card" style="margin-top:14px">
     <h2>Mi cuenta pendiente</h2>
     <div id="acc" class="mu">Elige tu nombre para ver tu cuenta.</div>
-    <button class="btn go hide" id="paybtn" style="width:100%">Pagar ahora (Yappy o cuenta)</button>
+    <button class="btn go hide" id="paybtn" style="width:100%">Pagar ahora</button>
+    <button class="btn" id="pfbtn2" style="width:100%;margin-top:6px">👤 Ver mis pedidos y mi perfil</button>
   </div>
 
   <div class="card">
@@ -208,7 +210,8 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
   <div class="mu">Hola <b id="pynom"></b>, tu pedido ya quedó registrado.</div>
   <div style="margin:10px 0">Monto a pagar: <span class="total" id="pymonto"></span></div>
   <div id="pyopts"></div>
-  <div class="mu">Con Yappy: escanea este código o guárdalo (mantén presionada la imagen) y súbelo desde la app.</div>
+  <div class="mu">Si el método tiene un código QR, escanéalo o guárdalo (mantén presionada la imagen). Después de pagar, sube tu comprobante desde la app.</div>
+  <div id="pymet"></div>
   <img id="pyqr" class="hide" alt="Código QR para pagar">
   <div id="pytx" class="hide"></div>
   <button class="btn sm" id="pycp" style="width:100%;padding:10px">Copiar datos de la cuenta</button>
@@ -246,6 +249,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
 <script src="mascota.js"></script>
 <script src="mascota-pixel.js"></script>
 <script src="instalar.js"></script>
+<script src="perfil.js"></script>
 <script src="baraja.js"></script>
 <script src="juegos.js"></script>
 <script>
@@ -323,7 +327,7 @@ const CAT_NOMBRE = { bebida: 'Bebidas', snack: 'Snacks', comida: 'Comidas', otro
 const CAT_ORDEN = { bebida: 0, snack: 1, comida: 2, otro: 3 };
 async function loadCatalog() {
   const { data, error } = await sb.rpc('catalogo', { p_sucursal: LOCAL });
-  if (error) { say('bm', 'No se pudo cargar el catálogo. Revisa config.js.', true); return; }
+  if (error) { if (navigator.onLine === false) window.__sinRedAlArrancar = true; say('bm', navigator.onLine === false ? '📡 Sin internet: no se puede cargar el catálogo. ¡Pero puedes practicar los juegos! 🎮' : 'No se pudo cargar el catálogo. Revisa config.js.', true); return; }
   cat = data || [];
   renderCatalogo();
 }
@@ -379,11 +383,13 @@ function renderMenu(secs) {
     secs.map(x => item(x.k, icono(x.k, x.nombre), x.nombre, x.items.length)).join('') +
     '<div class="sdiv"></div>' +
     (!$('promos').classList.contains('hide') ? '<button class="sitem" data-go="promos"><span>🎁 Promociones</span></button>' : '') +
+    '<button class="sitem" data-go="perfil"><span>👤 Mi perfil y mis pedidos</span></button>' +
     '<button class="sitem" data-go="cuenta"><span>🧾 Mi cuenta</span></button>' +
-    (typeof jgPendientes === 'function' && jgPendientes() > 0 ? '<button class="sitem" data-go="juegos"><span>🎮 Juegos y premios</span><small class="cnt">' + jgPendientes() + '</small></button>' : '') +
+    (typeof jgPendientes === 'function' ? '<button class="sitem" data-go="juegos"><span>🎮 Juegos y premios</span>' + (jgPendientes() > 0 ? '<small class="cnt">' + jgPendientes() + '</small>' : '') + '</button>' : '') +
     (typeof instEsApp === 'function' && !instEsApp() ? '<button class="sitem" data-go="instalar"><span>📲 Instalar la app</span></button>' : '') +
     (MASC_PUEDE ? '<button class="sitem" data-go="mascota"><span>🐾 Mascota: volver a su lugar</span></button>' : '') +
-    '<button class="sitem" data-go="buzon"><span>💬 Sugerencias y reclamos</span></button>';
+    '<button class="sitem" data-go="buzon"><span>💬 Sugerencias y reclamos</span></button>' +
+    (typeof sucItemsMenu === 'function' ? sucItemsMenu() : '');
 }
 const abrirMenu = () => { $('side').classList.add('on'); $('sidebg').classList.remove('hide'); };
 const cerrarMenu = () => { $('side').classList.remove('on'); $('sidebg').classList.add('hide'); };
@@ -395,6 +401,8 @@ $('sidenav').onclick = e => {
     cerrarMenu();
     if (go.dataset.go === 'promos') $('promos').scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (go.dataset.go === 'cuenta') $('acc').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (go.dataset.go === 'perfil') pfAbrir();
+    if (go.dataset.go.startsWith('suc:')) location.href = sucUrl(go.dataset.go.slice(4));
     if (go.dataset.go === 'buzon') $('bzabrir').click();
     if (go.dataset.go === 'mascota') restablecerMascota();
     if (go.dataset.go === 'juegos') jgAbrirPanel();
@@ -537,12 +545,14 @@ async function abrirPago() {
     : (hoy <= 0 ? '<div class="mu" style="margin-bottom:8px">Todavía no te toca pagar, pero puedes adelantar tu pago.</div>' : '');
   pintarMonto();
   $('pynom').textContent = nombreDe(c);
-  $('pyqr').classList.toggle('hide', !d.imagen);
+  const mets = await pfCargarMetodos(c, d);                       // varios métodos (Yappy, transferencia, efectivo…) o el pago de siempre
+  $('pymet').innerHTML = mets.propios ? pfHtmlMetodos(mets.lista) : '';
+  $('pyqr').classList.toggle('hide', mets.propios || !d.imagen);
   if (d.imagen) $('pyqr').src = d.imagen;
-  const txt = d.texto || (d.imagen ? '' : 'Todavía no hay datos de pago cargados. Pregunta en la tienda cómo pagar.');
+  const txt = mets.propios ? '' : (d.texto || (d.imagen ? '' : 'Todavía no hay datos de pago cargados. Pregunta en la tienda cómo pagar.'));
   $('pytx').classList.toggle('hide', !txt);
   $('pytx').textContent = txt;
-  $('pycp').classList.toggle('hide', !d.texto);
+  $('pycp').classList.toggle('hide', mets.propios || !d.texto);
   $('pyf').value = ''; $('pynota').value = ''; say('pymsg', '');
   $('paysheet').classList.remove('hide');
 }
@@ -820,7 +830,9 @@ const AVATARES = ["😀", "😎", "🤠", "🥳", "😋", "🤩", "😏", "🧐"
 const AV_COLORES = ["#e8590c", "#2f9e44", "#1971c2", "#9c36b5", "#c2255c", "#0c8599", "#f08c00", "#5f3dc4"];
 let avSel = null, avCol = null;
 function pintarAv(el, a, nombre) {
-  if (a && a.av) { el.textContent = a.av; el.style.background = a.col || '#dde3ea'; }
+  el.style.backgroundImage = '';
+  if (a && a.foto) { el.textContent = ''; el.style.background = '#dde3ea'; el.style.backgroundImage = `url("${a.foto}")`; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; }
+  else if (a && a.av) { el.textContent = a.av; el.style.background = a.col || '#dde3ea'; }
   else { el.textContent = (nombre || '?').charAt(0).toUpperCase(); el.style.background = '#5d6b7a'; }
 }
 async function cargarAvatar() {
@@ -828,10 +840,16 @@ async function cargarAvatar() {
   if (!c) { box.classList.add('hide'); return; }
   box.classList.remove('hide'); $('miavn').textContent = nombreDe(c);
   let a = null;
-  try { const { data } = await sb.rpc('mi_avatar', { p_cliente: c }); if (data && data[0] && data[0].avatar) a = { av: data[0].avatar, col: data[0].color }; } catch (e) {}
+  try {
+    let r = await sb.rpc('mi_perfil', { p_cliente: c });
+    if (r.error) r = await sb.rpc('mi_avatar', { p_cliente: c });            // por si aún no se ejecutó supabase_v22.sql
+    const f = r.data && r.data[0]; if (f && (f.avatar || f.foto)) a = { av: f.avatar, col: f.color, foto: f.foto };
+  } catch (e) {}
   if (!a) { try { a = JSON.parse(localStorage.getItem('avatar_' + c) || 'null'); } catch (e) {} }
+  let fotoLocal = null; try { fotoLocal = localStorage.getItem('foto_' + c); } catch (e) {}
+  if (fotoLocal && !(a && a.foto)) a = Object.assign({}, a, { foto: fotoLocal });
   pintarAv($('miavc'), a, nombreDe(c));
-  $('miavc').dataset.av = a ? a.av || '' : ''; $('miavc').dataset.col = a ? a.col || '' : '';
+  $('miavc').dataset.av = a ? a.av || '' : ''; $('miavc').dataset.col = a ? a.col || '' : ''; $('miavc').dataset.foto = a ? a.foto || '' : '';
 }
 function pintarSelectorAvatar() {
   say('avmsg', '');
@@ -902,11 +920,15 @@ try { const c = JSON.parse(localStorage.getItem('marca_' + (LOCAL || 0))); if (c
 (async () => {
   await loadLocalTienda();
   jgMontar();
+  pfMontar();
+  // si la tienda se abrió sin internet, al volver la conexión se recarga sola para traer los datos (espera a que termine el juego)
+  window.addEventListener('online', () => { if (!window.__sinRedAlArrancar) return; if (JG.enCurso && !JG.enCurso.fin) window.__recargarAlTerminar = true; else location.reload(); });
   await Promise.all([loadClients(), loadCatalog(), loadFrases(), loadModoMascota()]);
   await loadPromos();
   loadConfigTienda();
   jgCargar();
   mostrarPopup();
+  sucCargar();
   const c = codeOf(new URLSearchParams(location.search).get('p') || '');
   if (c) openSheet(c);
   saludo();

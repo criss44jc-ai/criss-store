@@ -4,10 +4,10 @@
    - Supabase, YouTube y todo lo demás: siempre directo a internet (los datos nunca se guardan aquí). */
 const VERSION = 'v1';
 const CACHE = 'criss-' + VERSION;
-const BASE = ['./', 'index.html', 'admin.html', 'config.js', 'baraja.js', 'juegos.js', 'instalar.js', 'mascota.js', 'mascota-pixel.js',
+const BASE = ['./', 'index.html', 'admin.html', 'config.js', 'baraja.js', 'juegos.js', 'perfil.js', 'instalar.js', 'mascota.js', 'mascota-pixel.js',
   'mascota.png', 'mascota-pixel-reposo.gif', 'mascota-pixel-alegre.gif', 'mascota-pixel-canta.gif', 'mascota-pixel-asoma.gif',
   'manifest.webmanifest', 'manifest-admin.webmanifest', 'icono-192.png', 'icono-admin-192.png',
-  'admin.js', 'admin2.js', 'admin3.js', 'admin4.js', 'admin5.js', 'admin6.js', 'admin7.js', 'admin8.js', 'admin9.js', 'admin10.js', 'admin11.js'];
+  'admin.js', 'admin2.js', 'admin3.js', 'admin4.js', 'admin5.js', 'admin6.js', 'admin7.js', 'admin8.js', 'admin9.js', 'admin10.js', 'admin11.js', 'admin12.js'];
 const CDN = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
 
 self.addEventListener('install', e => {

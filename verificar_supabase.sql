@@ -30,4 +30,5 @@ select
   to_regclass('public.correcciones') is not null                                           as "supabase_v18.sql",
   to_regclass('public.producto_oculto') is not null                                        as "supabase_v19.sql",
   to_regclass('public.popups') is not null                                                 as "supabase_v20.sql",
-  to_regclass('public.juegos') is not null                                                 as "supabase_v21.sql";
+  to_regclass('public.juegos') is not null                                                 as "supabase_v21.sql",
+  to_regclass('public.metodos_pago') is not null                                           as "supabase_v22.sql";

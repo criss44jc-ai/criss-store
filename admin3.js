@@ -12,6 +12,7 @@ function avatarHtml(id, grande) {
   const p = perfiles[id] || {}, cls = 'av' + (grande ? ' g' : '');
   if (p.avatar_url) return `<img class="${cls}" src="${esc(p.avatar_url)}" alt="">`;
   if (p.avatar) return `<div class="${cls}" style="background:${colorDe(id)}33">${esc(p.avatar)}</div>`;
+  if (p.foto_cliente) return `<img class="${cls}" src="${esc(p.foto_cliente)}" alt="">`;
   if (p.avatar_cliente) return `<div class="${cls}" style="background:${esc(p.avatar_color || colorDe(id) + '33')}">${esc(p.avatar_cliente)}</div>`;
   return `<div class="${cls}" style="background:${colorDe(id)}">${esc((nombreDe(id) || '?').charAt(0).toUpperCase())}</div>`;
 }
@@ -125,6 +126,8 @@ function renderPerfil() {
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
           <label class="btn sm" style="cursor:pointer;margin:0;display:inline-block">📷 Foto<input type="file" accept="image/*" id="pf-foto" hidden></label>
           ${p.avatar_url ? '<button class="btn sm" id="pf-quitar" style="margin:0">Quitar foto</button>' : ''}
+          <button class="btn sm" data-hist="${id}" style="margin:0">📊 Historial y evaluación</button>
+          ${p.foto_cliente ? `<button class="btn sm" data-qfc="${id}" style="margin:0">Quitar la foto que subió el cliente</button>` : ''}
         </div></div></div>
     <details><summary>Elegir un avatar</summary><div class="emoji">${AVATARES.map(e => `<button data-emo="${e}">${e}</button>`).join('')}</div></details>
     ${p.avatar_cliente ? `<div class="mu" style="margin-top:6px">Avatar que eligió el cliente: <b>${esc(p.avatar_cliente)}</b>. Se usa mientras tú no le pongas una foto o un avatar.</div>` : ''}

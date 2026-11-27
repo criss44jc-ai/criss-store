@@ -7,14 +7,14 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 | Archivo | Para qué sirve |
 |---|---|
 | `index.html` | La tienda que ven tus clientes |
-| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `admin11.js`, `baraja.js`, `juegos.js` | Tu panel de administrador (se abre en `/admin.html`) |
+| `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `admin11.js`, `admin12.js`, `baraja.js`, `juegos.js`, `perfil.js` | Tu panel de administrador (se abre en `/admin.html`) |
 | `mascota.png` | La imagen de la portada, el ícono de la pestaña y el respaldo de la mascota |
 | `mascota.js` | **La mascota animada** (cuatro estados). La tienda la necesita para moverse |
 | `mascota-pixel.js` y `mascota-pixel-alegre.gif`, `-canta.gif`, `-asoma.gif`, `-reposo.gif` | **La mascota pixelada animada**, de 64 × 64 píxeles y mostrada a 128 px (la tienda necesita los 5 archivos) |
 | `mascota.svg` | La mascota interactiva como imagen animada suelta (opcional) |
 | `mascota-demo.html` | Página para ver y probar sus movimientos (opcional) |
 | `config.js` | La conexión con Supabase (**ya lo tienes en GitHub con tus datos; no lo reemplaces**) |
-| `supabase.sql` a `supabase_v21.sql` | La base de datos, en 21 partes |
+| `supabase.sql` a `supabase_v22.sql` | La base de datos, en 22 partes |
 | `verificar_supabase.sql` | Te dice cuáles de esas partes ya ejecutaste |
 | `README.md`, `GUIA-INSTALACION.md` | Documentación |
 
@@ -22,12 +22,12 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 
 1. Entra a **supabase.com** y abre tu proyecto.
 2. Abre **SQL Editor** (icono `>_`) y pulsa **New query**.
-3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con veintiuna columnas: `true` significa que esa parte ya está instalada y `false` que falta.
-4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`, `supabase_v20.sql`, `supabase_v21.sql`.
+3. Pega el contenido de `verificar_supabase.sql` y pulsa **Run**. Verás una fila con veintidós columnas: `true` significa que esa parte ya está instalada y `false` que falta.
+4. Ejecuta **solo los archivos que dicen `false`**, en este orden: `supabase.sql`, `supabase_v2.sql`, `supabase_v3.sql`, `supabase_v4.sql`, `supabase_v5.sql`, `supabase_v6.sql`, `supabase_v7.sql`, `supabase_v8.sql`, `supabase_v9.sql`, `supabase_v10.sql`, `supabase_v11.sql`, `supabase_v12.sql`, `supabase_v13.sql`, `supabase_v14.sql`, `supabase_v15.sql`, `supabase_v16.sql`, `supabase_v17.sql`, `supabase_v18.sql`, `supabase_v19.sql`, `supabase_v20.sql`, `supabase_v21.sql`, `supabase_v22.sql`.
    - Para cada uno: **New query**, pega todo el contenido y pulsa **Run**. Debe decir **Success**.
    - Si sale un aviso de "destructive operations", pulsa **Run this query**.
    - **No repitas** un archivo que ya ejecutaste: daría errores de "already exists".
-5. Vuelve a ejecutar `verificar_supabase.sql`: las veintiuna columnas deben decir `true`.
+5. Vuelve a ejecutar `verificar_supabase.sql`: las veintidós columnas deben decir `true`.
 
 ## Paso 2 · Supabase: tu usuario administrador
 
@@ -42,7 +42,7 @@ Sigue los pasos en este orden. Si algo ya lo hiciste antes, salta ese paso.
 3. Arrastra **todos los archivos menos `config.js`** (los archivos, no la carpeta).
 4. Pulsa **Commit changes**.
 
-Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `admin11.js`, `baraja.js`, `juegos.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
+Los archivos que ya existen se reemplazan solos. Revisa que en la raíz estén `index.html`, `admin.html`, `admin.js`, `admin2.js`, `admin3.js`, `admin4.js`, `admin5.js`, `admin6.js`, `admin7.js`, `admin8.js`, `admin9.js`, `admin10.js`, `admin11.js`, `admin12.js`, `baraja.js`, `juegos.js`, `perfil.js`, `mascota.png`, `mascota.js`, `mascota-pixel.js` y los cuatro `mascota-pixel-*.gif`, y que no queden archivos con nombres raros como `index (1).html`.
 
 ## Paso 4 · Vercel: publicar
 
@@ -88,6 +88,37 @@ En `/admin.html` → **Locales**:
 - **Pedido desde el panel:** al crear un pedido para un cliente eliges de qué local sale.
 - **Ventas por local:** en Locales, una tabla con los pedidos, unidades, ventas, ganancia y lo que falta por cobrar de cada local (hoy, este mes o todo el tiempo). El informe del día también las separa por local.
 - Si anulas un pedido, la mercancía vuelve al local de donde salió.
+
+## Perfil del cliente: foto, pedidos por pagar y cómo pagar
+
+En la tienda, el cliente que elige su nombre ve el botón **Mi perfil** (también en ☰ → 👤 Mi perfil y mis pedidos, y bajo "Mi cuenta pendiente"). Ahí puede:
+- **Subir su foto** (opcional) o quitarla, y elegir un **avatar**. La foto se recorta cuadrada y se achica sola. Tú la ves en el panel junto a su nombre; si no te gusta una foto, en el perfil del cliente tienes **Quitar la foto que subió el cliente**.
+- Ver sus **pedidos por pagar**: cuánto debe en total, cuánto **toca pagar hoy** y cuánto está **vencido**, y cada pedido con su producto, factura, monto y fecha (“Vencido hace 5 días”, “Toca pagar hoy”, “Pagar el 15/12”).
+- Ver **cómo pagar** (todos los métodos que tú definas) y tocar **Pagar ahora**.
+- Ver sus últimos 15 pedidos ya pagados.
+
+## Métodos de pago
+
+En `/admin.html` → **Más → Métodos de pago de la tienda 🏦** agregas todos los que quieras (Yappy, transferencia, efectivo…), cada uno con sus instrucciones y, si quieres, su código QR. Puedes **ordenarlos** con ↑ ↓, **ocultarlos** y quitarlos. Los clientes los ven en su perfil y en la pantalla de pago, con un botón **Copiar datos**. Mientras no crees ninguno, siguen viendo el QR y la cuenta de “Datos de pago” de siempre.
+
+## Historial y evaluación de clientes
+
+En **Clientes**:
+- **Reporte de todos los clientes 📊:** una tabla con pedidos, comprado, por pagar, % que paga a tiempo, último pedido y la **evaluación de 0 a 100** de cada uno. Se ordena por mejor evaluados, en riesgo, los que más compran, los que más deben, el pedido más reciente o por nombre; se busca por nombre y se descarga en **CSV** (abre en Excel).
+- **Historial y evaluación** (en el perfil de cada cliente): todo lo que ha pedido, **pedido por pedido** (fecha, factura, producto, cantidad, monto, estado, fecha de vencimiento, cuándo pagó y días de atraso), con filtros por período, estado y búsqueda. Trae sus indicadores, lo que más pide, sus compras por mes, sus pagos, y botones para descargar **CSV**, **imprimir / PDF** y mandar un **resumen por WhatsApp**.
+
+**Cómo se calcula la evaluación** (se muestra el desglose en cada cliente): 50 puntos por **puntualidad** al pagar, 25 por **no tener deudas vencidas**, 15 por **frecuencia** (pedidos en los últimos 90 días) y 10 por **constancia** (meses con compras de los últimos 6). 85 o más: Excelente · 70 a 84: Bueno · 50 a 69: Regular · menos de 50: En riesgo. Con menos de 3 pedidos sale “Cliente nuevo” (todavía poco confiable) y sin pedidos “Sin pedidos”. Los pedidos “anteriores al sistema” no cuentan para puntualidad ni frecuencia. Es una guía: la decisión sobre cada cliente es tuya.
+
+## Botones a otras sucursales
+
+Cuando cada sucursal vende productos distintos, en `/admin.html` → **Locales → Botones a otras sucursales 🏬** eliges la tienda donde aparece el botón, a cuál lleva y, si quieres, el texto del botón (por ejemplo “Ver el menú de comidas”). Puedes marcar **También agregar el botón de regreso**. El cliente ve un recuadro **“También puedes pedir en:”** con los botones (y también en ☰) y, al tocarlos, entra a la tienda de esa sucursal con su propio catálogo. Puedes ordenarlos y quitarlos.
+
+## Juegos sin internet y memoria con más cartas
+
+- **Memoria con más cartas:** al crear un juego de memoria eliges **6, 8, 10 o 12 parejas** (12 a 24 cartas). Los movimientos permitidos crecen con las parejas y según la dificultad.
+- **Práctica sin internet:** en ☰ → 🎮 Juegos y premios, abajo, está **Practicar**: los tres juegos (con dificultad, y las parejas en memoria) funcionan **sin internet** y sin premio, también cuando sí hay conexión. Si el cliente abre la tienda sin internet, sale el aviso **“Sin internet: ¡practica los juegos!”**.
+- **Para que funcione sin internet** el cliente tiene que haber abierto la tienda **una vez con internet** (así guarda lo necesario), y conviene que la haya instalado como app.
+- **Los juegos con premio y las encuestas sí necesitan internet**, porque el servidor es quien comprueba quién ganó y quién responde. Así nadie puede inventarse una victoria sin conexión. Al volver el internet, la tienda se actualiza sola (si el cliente está jugando, espera a que termine).
 
 ## App en el celular y en la Mac
 

@@ -11,6 +11,9 @@ const JG_TIPOS = {
   atrapa: ['🐾', 'Toca a la mascota cada vez que asome. Tienes 15 segundos.']
 };
 const JG_DIF = { facil: 'Fácil', normal: 'Normal', dificil: 'Difícil' };
+const JG_CARAS = ['M', '🥤', '🍿', '🍌', '🍕', '🍩', '🍉', '🍓', '🥑', '🌽', '🍔', '🌮'];      // 'M' = la mascota
+const jgLimMemoria = (pares, dif) => dif === 'facil' ? pares * 3 : dif === 'normal' ? Math.round(pares * 2.2) : Math.round(pares * 1.7);
+const JG_NOM = { vasos: '¿Dónde está la mascota?', memoria: 'Memoria', atrapa: 'Atrapa a la mascota' };
 
 function jgEstilos() {
   if (jgq('jg-css')) return;
@@ -25,6 +28,7 @@ function jgEstilos() {
   .jg-card.win{background:#fff8db;border-color:#ffd23f;display:block}
   .jg-ic{font-size:34px;line-height:1;flex:none}
   .jg-ok{margin:8px 0;font-weight:700;color:#0b7a75}
+  .jg-sel{display:flex;gap:8px;margin-top:6px}.jg-sel select{flex:1;padding:8px;border-radius:10px;border:2px solid var(--ln,#dde3ea);font-size:15px;background:#fff}
   .jq{margin:12px 0}
   .jq-o{display:flex;gap:8px;align-items:center;padding:8px 10px;margin:6px 0;border:2px solid var(--ln,#dde3ea);border-radius:10px;cursor:pointer}
   .jq-o input{width:auto;margin:0}
@@ -53,12 +57,13 @@ function jgEstilos() {
   .vs.espera .vc:hover .vcup{transform:translateY(-10px)}
   /* memoria */
   .mg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:min(360px,94vw)}
-  .mc{aspect-ratio:1;border:0;border-radius:14px;background:#ffd23f;font-size:34px;position:relative;cursor:pointer;color:#12263a;padding:0}
-  .mc span{position:absolute;inset:0;display:grid;place-items:center;border-radius:14px;transition:opacity .2s}
-  .mc .mb{background:#fff;opacity:0}
-  .mc.on .mb,.mc.ok .mb{opacity:1}
-  .mc.ok{outline:3px solid #2f9e44}
-  .mc img{width:78%;height:78%;border-radius:50%;object-fit:cover}
+  .mg.g20,.mg.g24{gap:6px}.mg.g16 .mcarta{font-size:30px}.mg.g20 .mcarta{font-size:27px}.mg.g24 .mcarta{font-size:24px}
+  .mcarta{aspect-ratio:1;border:0;border-radius:14px;background:#ffd23f;font-size:34px;position:relative;cursor:pointer;color:#12263a;padding:0}
+  .mcarta span{position:absolute;inset:0;display:grid;place-items:center;border-radius:14px;transition:opacity .2s}
+  .mcarta .mb{background:#fff;opacity:0}
+  .mcarta.on .mb,.mcarta.ok .mb{opacity:1}
+  .mcarta.ok{outline:3px solid #2f9e44}
+  .mcarta img{width:78%;height:78%;border-radius:50%;object-fit:cover}
   /* atrapa */
   .ag{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(330px,92vw)}
   .ah{aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 35%,#5b3a1e,#2a1a0b);border:4px solid #8a5a2b;position:relative;overflow:hidden;padding:0;cursor:pointer}
@@ -99,7 +104,11 @@ function jgMontar() {
     const x = e.target.closest('[data-cerrar]'); if (x) jgq(x.dataset.cerrar).classList.add('hide');
     const j = e.target.closest('[data-jugar]'); if (j) jgJugar(Number(j.dataset.jugar));
     const en = e.target.closest('[data-enc]'); if (en) jgAbrirEncuesta(Number(en.dataset.enc));
+    const pr = e.target.closest('[data-practicar]');
+    if (pr) { const card = pr.closest('.jg-card'), p = card.querySelector('[data-ppares]'); jgPracticar(pr.dataset.practicar, card.querySelector('[data-pdif]').value, p ? Number(p.value) : 6); }
+    const ot = e.target.closest('[data-otra]'); if (ot && JG.ultimaPractica) jgPracticar(JG.ultimaPractica.tipo, JG.ultimaPractica.dif, JG.ultimaPractica.pares);
   });
+  window.addEventListener('online', () => jgCargar()); window.addEventListener('offline', () => jgCargar());
   jgq('jjx').onclick = jgSalir;
   jgq('jwinx').onclick = () => { jgq('jwin').classList.add('hide'); jgPremioVisto(); };
 }
@@ -111,12 +120,22 @@ function jgPendientes() {
 }
 async function jgCargar() {
   const c = jgq('cl').value || null;
-  const { data, error } = await sb.rpc('campanas_tienda', { p_cliente: c, p_sucursal: LOCINFO ? LOCINFO.id : LOCAL });
-  JG.datos = (!error && data) ? { encuestas: data.encuestas || [], juegos: data.juegos || [] } : { encuestas: [], juegos: [] };
-  const ban = jgq('jgbanner'); if (ban) ban.classList.toggle('hide', jgPendientes() === 0);
-  if (typeof cat !== 'undefined' && cat.length) renderMenu(secciones());
+  let datos = null;
+  if (navigator.onLine !== false) {
+    const { data, error } = await sb.rpc('campanas_tienda', { p_cliente: c, p_sucursal: LOCINFO ? LOCINFO.id : LOCAL });
+    if (!error && data) { datos = { encuestas: data.encuestas || [], juegos: data.juegos || [] }; try { localStorage.setItem('jg_cache', JSON.stringify(datos)); } catch (e) {} }
+  }
+  JG.sinRed = !datos;                                                   // sin internet: se muestra la última copia y se puede practicar
+  if (!datos) { try { datos = JSON.parse(localStorage.getItem('jg_cache') || 'null'); } catch (e) {} }
+  JG.datos = datos || { encuestas: [], juegos: [] };
+  const ban = jgq('jgbanner');
+  if (ban) {
+    ban.classList.toggle('hide', !(JG.sinRed || jgPendientes() > 0));
+    ban.innerHTML = JG.sinRed ? '📡 <b>Sin internet: ¡practica los juegos!</b><div class="mu">Toca para jugar sin conexión</div>' : '🎮 <b>¡Hay juegos y premios para ti!</b><div class="mu">Toca para participar</div>';
+  }
+  try { renderMenu(secciones()); } catch (e) {}
   if (!jgq('jpanel').classList.contains('hide')) jgPintarPanel();
-  if (c) jgRevisarPremios(c); else JG.premios = [];
+  if (c && !JG.sinRed) jgRevisarPremios(c); else if (!c) JG.premios = [];
 }
 async function jgRevisarPremios(c) {
   const { data } = await sb.rpc('mis_sorteos', { p_cliente: c });
@@ -137,7 +156,8 @@ function jgTarjetaJuego(j, c) {
   const t = JG_TIPOS[j.tipo] || JG_TIPOS.vasos, falta = Math.max(0, j.min_pedidos - j.pedidos), quedan = j.intentos - j.usados;
   const btnEnc = j.encuesta_id && j.encuesta_respondida === false ? `<button class="btn go" data-enc="${j.encuesta_id}" style="width:100%;margin-top:6px">Responder la encuesta${j.gano ? ' para entrar a la ruleta' : ''}</button>` : '';
   let estado;
-  if (!c) estado = '<div class="mu">Elige tu nombre arriba para jugar.</div>';
+  if (JG.sinRed) estado = '<div class="mu">📡 Para jugar por el premio necesitas internet. Mientras tanto, ¡practica abajo!</div>';
+  else if (!c) estado = '<div class="mu">Elige tu nombre arriba para jugar.</div>';
   else if (falta > 0) estado = `<div class="tip">Haz <b>${falta}</b> pedido${falta === 1 ? '' : 's'} más para poder jugar.</div>`;
   else if (quedan <= 0) estado = (j.gano ? '<div class="jg-ok">✅ ¡Ganaste! Estás dentro de la ruleta.</div>' : '<div class="mu">Ya usaste tu intento.</div>') + btnEnc;
   else estado = `<button class="btn go" data-jugar="${j.id}" style="width:100%;margin-top:6px">Jugar${j.intentos > 1 ? ` (${quedan} intento${quedan === 1 ? '' : 's'})` : ''}</button>`;
@@ -148,19 +168,29 @@ function jgTarjetaJuego(j, c) {
 function jgTarjetaEncuesta(e, c) {
   const falta = Math.max(0, e.min_pedidos - e.pedidos);
   let estado;
-  if (!c) estado = '<div class="mu">Elige tu nombre arriba para responder.</div>';
+  if (JG.sinRed) estado = '<div class="mu">📡 Necesitas internet para responder.</div>';
+  else if (!c) estado = '<div class="mu">Elige tu nombre arriba para responder.</div>';
   else if (e.respondida) estado = '<div class="jg-ok">✅ Ya respondiste. ¡Gracias!</div>';
   else if (falta > 0) estado = `<div class="tip">Haz <b>${falta}</b> pedido${falta === 1 ? '' : 's'} más para poder responder.</div>`;
   else estado = `<button class="btn go" data-enc="${e.id}" style="width:100%;margin-top:6px">Responder (${(e.preguntas || []).length} pregunta${(e.preguntas || []).length === 1 ? '' : 's'})</button>`;
   return `<div class="jg-card"><div class="jg-ic">📝</div><div style="flex:1;min-width:0"><b>${esc(e.titulo)}</b>
     ${e.descripcion ? `<div class="mu">${esc(e.descripcion)}</div>` : ''}${e.premio ? `<div>🏆 ${esc(e.premio)}</div>` : ''}${estado}</div></div>`;
 }
+function jgPracticaHtml() {
+  return '<h3 style="margin:18px 0 2px;font-size:17px">🕹️ Practicar</h3><div class="mu">Sin premio y <b>sin necesidad de internet</b>. Sirve para entrenar.</div>' +
+    ['vasos', 'memoria', 'atrapa'].map(t => `<div class="jg-card"><div class="jg-ic">${JG_TIPOS[t][0]}</div><div style="flex:1;min-width:0"><b>${JG_NOM[t]}</b>
+      <div class="mu">${esc(JG_TIPOS[t][1])}</div>
+      <div class="jg-sel"><select data-pdif="${t}"><option value="facil">Fácil</option><option value="normal" selected>Normal</option><option value="dificil">Difícil</option></select>
+      ${t === 'memoria' ? '<select data-ppares="1"><option value="6">6 parejas</option><option value="8">8 parejas</option><option value="10">10 parejas</option><option value="12">12 parejas</option></select>' : ''}</div>
+      <button class="btn" data-practicar="${t}" style="width:100%;margin-top:6px">Practicar</button></div></div>`).join('');
+}
 function jgPintarPanel() {
   const c = jgq('cl').value, D = JG.datos; let h = '';
+  if (JG.sinRed) h += '<div class="tip">📡 <b>Sin internet.</b> Los juegos con premio necesitan conexión, pero puedes practicar abajo.</div>';
   if (JG.premios.length) h += `<div class="jg-card win"><b>🏆 Tus premios</b>${JG.premios.map(p => `<div>${esc(p.premio || p.titulo || 'Premio')} <span class="mu">· ${p.entregado ? 'entregado' : 'por entregar'}</span></div>`).join('')}</div>`;
   h += D.juegos.map(j => jgTarjetaJuego(j, c)).join('') + D.encuestas.map(e => jgTarjetaEncuesta(e, c)).join('');
-  if (!D.juegos.length && !D.encuestas.length) h += '<div class="mu" style="margin:14px 0">Por ahora no hay juegos ni encuestas. ¡Vuelve pronto!</div>';
-  jgq('jpbody').innerHTML = h;
+  if (!D.juegos.length && !D.encuestas.length && !JG.sinRed) h += '<div class="mu" style="margin:14px 0">Por ahora no hay juegos con premio ni encuestas. ¡Vuelve pronto! Mientras tanto, practica:</div>';
+  jgq('jpbody').innerHTML = h + jgPracticaHtml();
 }
 
 /* ---------------- encuestas ---------------- */
@@ -205,26 +235,47 @@ function jgAbrirEncuesta(id) {
 /* ---------------- juegos ---------------- */
 function jgLimpiarTimers() { JG.timers.forEach(t => { clearTimeout(t); clearInterval(t); }); JG.timers = []; }
 const jgInfo = t => { jgq('jji').innerHTML = t; };
-function jgCerrarJuego() { JG.vivo++; jgLimpiarTimers(); JG.enCurso = null; jgq('jjuego').classList.add('hide'); jgq('jjb').innerHTML = ''; }
+function jgCerrarJuego() {
+  JG.vivo++; jgLimpiarTimers(); JG.enCurso = null; jgq('jjuego').classList.add('hide'); jgq('jjb').innerHTML = '';
+  if (window.__recargarAlTerminar && navigator.onLine !== false) location.reload();
+}
 function jgSalir() {
   const e = JG.enCurso;
-  if (e && !e.fin) { if (!confirm('Si sales ahora pierdes este intento. ¿Salir?')) return; jgFin({}, true); }
+  if (e && !e.fin && !e.practica) { if (!confirm('Si sales ahora pierdes este intento. ¿Salir?')) return; jgFin({}, true); }
   else jgCerrarJuego();
 }
+function jgAbrirJuego(j, datos, intento, practica) {
+  JG.vivo++; jgLimpiarTimers(); JG.enCurso = { j, intento, fin: false, practica };
+  jgq('jjt').textContent = (practica ? '🕹️ Práctica · ' : '') + j.titulo; jgq('jjr').classList.add('hide'); jgq('jjb').innerHTML = ''; jgq('jjuego').classList.remove('hide');
+  if (j.tipo === 'vasos') jgVasos(j, datos); else if (j.tipo === 'memoria') jgMemoria(j); else jgAtrapa(j);
+}
+// juego oficial: cuenta para el premio (necesita internet)
 async function jgJugar(id) {
   const c = jgq('cl').value, j = JG.datos.juegos.find(x => x.id === id);
   if (!c || !j) return;
   say('jpmsg', 'Preparando el juego…');
   const { data, error } = await sb.rpc('juego_iniciar', { p_juego: id, p_cliente: c });
-  if (error) { say('jpmsg', error.message, true); jgCargar(); return; }
+  if (error) { say('jpmsg', /fetch|network|Failed/i.test(error.message) ? 'Sin internet: no se puede jugar por el premio ahora. ¡Practica abajo!' : error.message, true); jgCargar(); return; }
   say('jpmsg', ''); jgq('jpanel').classList.add('hide');
-  JG.vivo++; jgLimpiarTimers(); JG.enCurso = { j, intento: data.intento, fin: false };
-  jgq('jjt').textContent = j.titulo; jgq('jjr').classList.add('hide'); jgq('jjb').innerHTML = ''; jgq('jjuego').classList.remove('hide');
-  if (j.tipo === 'vasos') jgVasos(j, data); else if (j.tipo === 'memoria') jgMemoria(j); else jgAtrapa(j);
+  jgAbrirJuego(j, data, data.intento, false);
 }
-async function jgFin(resultado, silencioso) {
+// práctica: no cuenta para premios y funciona sin internet
+function jgPracticar(tipo, dif, pares) {
+  JG.ultimaPractica = { tipo, dif, pares };
+  const j = { id: 0, titulo: JG_NOM[tipo], tipo, dificultad: dif, pares: pares || 6, premio: null, ganadores: 0, intentos: 1, usados: 0, encuesta_id: null };
+  let datos = {};
+  if (tipo === 'vasos') {
+    const n = { facil: 6, normal: 9, dificil: 13 }[dif] || 9, swaps = [];
+    for (let i = 0; i < n; i++) { const a = jgAzar(3); swaps.push([a, (a + 1 + jgAzar(2)) % 3]); }
+    datos = { inicio: jgAzar(3), swaps };
+  }
+  jgq('jpanel').classList.add('hide');
+  jgAbrirJuego(j, datos, null, true);
+}
+async function jgFin(resultado, silencioso, gano) {
   const e = JG.enCurso; if (!e || e.fin) return;
   e.fin = true; JG.vivo++; jgLimpiarTimers();
+  if (e.practica) { if (silencioso) jgCerrarJuego(); else jgResultado({ gano: !!gano, practica: true }, e.j); return; }
   const { data, error } = await sb.rpc('juego_terminar', { p_intento: e.intento, p_cliente: jgq('cl').value, p_resultado: resultado });
   if (silencioso) { jgCerrarJuego(); jgCargar(); return; }
   jgResultado(error ? { error: error.message } : data, e.j);
@@ -233,12 +284,13 @@ async function jgFin(resultado, silencioso) {
 function jgResultado(r, j) {
   const box = jgq('jjr'), gano = !!r.gano, quedan = j.intentos - (j.usados + 1);
   const btnEnc = r.encuesta_id && r.encuesta_respondida === false ? `<button class="btn go" data-enc="${r.encuesta_id}">Responder la encuesta${gano ? ' para entrar a la ruleta' : ''}</button>` : '';
-  if (r.error) box.innerHTML = `<div class="big">⚠️</div><h2>No se pudo guardar</h2><div class="mu">${esc(r.error)}</div><button class="btn go" id="jjcerrar">Cerrar</button>`;
+  if (r.practica) box.innerHTML = `<div class="big">${gano ? '🎉' : '😅'}</div><h2>${gano ? '¡Muy bien!' : '¡Casi!'}</h2><div>${gano ? 'Lo lograste.' : 'Sigue practicando.'}<br><span class="mu">Esto fue práctica: no cuenta para premios.</span></div><button class="btn go" data-otra="1">Practicar otra vez</button><button class="btn" id="jjcerrar">Cerrar</button>`;
+  else if (r.error) box.innerHTML = `<div class="big">⚠️</div><h2>No se pudo guardar</h2><div class="mu">${esc(r.error)}</div><button class="btn go" id="jjcerrar">Cerrar</button>`;
   else if (gano) box.innerHTML = `<div class="big">🎉</div><h2>¡Ganaste!</h2><div>${j.premio ? `Premio: <b>${esc(j.premio)}</b><br>` : ''}Quedas dentro de la ruleta${j.ganadores > 1 ? ` (salen ${j.ganadores} ganadores)` : ''}.</div>${btnEnc}<button class="btn" id="jjcerrar">Cerrar</button>`;
   else box.innerHTML = `<div class="big">😅</div><h2>¡Casi!</h2><div>Gracias por jugar.${quedan > 0 ? ` Te quedan ${quedan} intento${quedan === 1 ? '' : 's'}.` : ''}</div>${btnEnc}${quedan > 0 ? `<button class="btn go" data-jugar="${j.id}" id="jjotra">Intentar otra vez</button>` : ''}<button class="btn" id="jjcerrar">Cerrar</button>`;
   jgq('jjb').innerHTML = ''; jgInfo(''); box.classList.remove('hide');
   const cerrar = jgq('jjcerrar'); if (cerrar) cerrar.onclick = jgCerrarJuego;
-  if (gano && typeof habla === 'function') habla('🎉 ¡Ganaste, {cliente}!');
+  if (gano && !r.practica && typeof habla === 'function') habla('🎉 ¡Ganaste, {cliente}!');
 }
 
 /* ----- 1 · ¿Dónde está la mascota? (vasos) ----- */
@@ -271,19 +323,19 @@ async function jgVasos(j, cfg) {
     if (elegido !== correcto) c.classList.add('up');
     jgInfo(elegido === correcto ? '🎯 ¡Ahí estaba!' : '😬 ¡Ahí no estaba!');
     await jgDormir(1300); if (!sigue()) return;
-    jgFin({ copa: slotDe[elegido] });
+    jgFin({ copa: slotDe[elegido] }, false, elegido === correcto);
   };
 }
 
-/* ----- 2 · Memoria ----- */
+/* ----- 2 · Memoria (de 6 a 12 parejas) ----- */
 function jgMemoria(j) {
-  const vivo = JG.vivo, lim = { facil: 18, normal: 13, dificil: 10 }[j.dificultad] || 13;
-  const caras = ['🥤', '🍿', '🍌', '🍕', '🍩', 'M'], mazo = jgBarajar(caras.concat(caras));
-  jgq('jjb').innerHTML = `<div class="mg" id="mg">${mazo.map((f, i) => `<button class="mc" data-i="${i}" data-f="${f}"><span class="mf">❓</span><span class="mb">${f === 'M' ? '<img src="mascota.png" alt="">' : f}</span></button>`).join('')}</div>`;
+  const vivo = JG.vivo, total = [6, 8, 10, 12].includes(j.pares) ? j.pares : 6, lim = jgLimMemoria(total, j.dificultad);
+  const caras = JG_CARAS.slice(0, total), mazo = jgBarajar(caras.concat(caras));
+  jgq('jjb').innerHTML = `<div class="mg g${total * 2}" id="mg">${mazo.map((f, i) => `<button class="mcarta" data-i="${i}" data-f="${f}"><span class="mf">❓</span><span class="mb">${f === 'M' ? '<img src="mascota.png" alt="">' : f}</span></button>`).join('')}</div>`;
   let abiertas = [], movs = 0, pares = 0, bloqueo = false; const t0 = Date.now();
-  const info = () => jgInfo(`Movimientos: <b>${movs}</b> de ${lim} · Parejas: <b>${pares}</b>/6`); info();
+  const info = () => jgInfo(`Movimientos: <b>${movs}</b> de ${lim} · Parejas: <b>${pares}</b>/${total}`); info();
   jgq('mg').onclick = async ev => {
-    const b = ev.target.closest('.mc'); if (!b || bloqueo || b.classList.contains('on') || b.classList.contains('ok')) return;
+    const b = ev.target.closest('.mcarta'); if (!b || bloqueo || b.classList.contains('on') || b.classList.contains('ok')) return;
     b.classList.add('on'); abiertas.push(b);
     if (abiertas.length < 2) return;
     movs++; bloqueo = true; const [x, y] = abiertas; abiertas = [];
@@ -291,8 +343,8 @@ function jgMemoria(j) {
     else { await jgDormir(700); x.classList.remove('on'); y.classList.remove('on'); }
     if (JG.vivo !== vivo) return;
     info(); bloqueo = false;
-    if (pares === 6) { await jgDormir(500); if (JG.vivo === vivo) jgFin({ movs, ms: Date.now() - t0 }); }
-    else if (movs >= lim) { jgInfo('😬 Se acabaron los movimientos'); await jgDormir(900); if (JG.vivo === vivo) jgFin({ movs, ms: Date.now() - t0 }); }
+    if (pares === total) { await jgDormir(500); if (JG.vivo === vivo) jgFin({ movs, ms: Date.now() - t0 }, false, true); }
+    else if (movs >= lim) { jgInfo('😬 Se acabaron los movimientos'); await jgDormir(900); if (JG.vivo === vivo) jgFin({ movs, ms: Date.now() - t0 }, false, false); }
   };
 }
 
@@ -314,6 +366,6 @@ function jgAtrapa(j) {
     t0 = Date.now(); info(); asomar();
     JG.timers.push(setInterval(() => { if (JG.vivo === vivo) { asomar(); info(); } }, c.int));
     JG.timers.push(setInterval(() => { if (JG.vivo === vivo) info(); }, 250));
-    JG.timers.push(setTimeout(() => { if (JG.vivo === vivo) jgFin({ score, ms: Date.now() - t0 }); }, DUR));
+    JG.timers.push(setTimeout(() => { if (JG.vivo === vivo) jgFin({ score, ms: Date.now() - t0 }, false, score >= c.meta); }, DUR));
   }, 1500));
 }

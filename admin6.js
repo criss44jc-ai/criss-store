@@ -48,6 +48,7 @@ function extrasLocales() {
   if (typeof llenarLocalesCurva === 'function') llenarLocalesCurva();
   if (typeof loadOcultos === 'function') loadOcultos();
   if (typeof llenarSelectoresPopup === 'function') llenarSelectoresPopup();
+  if (typeof loadEnlacesSuc === 'function') loadEnlacesSuc();
   if (!$('t-loc').classList.contains('hide')) cargarInvDia();
 }
 

@@ -119,10 +119,11 @@ async function verResultadosEncuesta(id) {
 function ayudaJuego() {
   const t = $('jg-tipo').value, d = $('jg-dif').value;
   $('jg-ayuda').textContent = t === 'vasos' ? `${{ facil: 6, normal: 9, dificil: 13 }[d]} mezclas de vasos. Gana quien adivina dónde quedó la mascota.`
-    : t === 'memoria' ? `6 parejas. Gana quien las encuentra en ${{ facil: 18, normal: 13, dificil: 10 }[d]} movimientos o menos.`
+    : t === 'memoria' ? (() => { const p = Number($('jg-pares').value) || 6; return `${p} parejas (${p * 2} cartas). Gana quien las encuentra en ${d === 'facil' ? p * 3 : d === 'normal' ? Math.round(p * 2.2) : Math.round(p * 1.7)} movimientos o menos.`; })()
     : `Gana quien atrapa a la mascota ${{ facil: 6, normal: 9, dificil: 12 }[d]} veces o más en 15 segundos.`;
 }
-$('jg-tipo').onchange = ayudaJuego; $('jg-dif').onchange = ayudaJuego;
+$('jg-tipo').onchange = () => { $('jg-paresw').classList.toggle('hide', $('jg-tipo').value !== 'memoria'); ayudaJuego(); };
+$('jg-dif').onchange = ayudaJuego; $('jg-pares').onchange = ayudaJuego;
 $('jg-pub').onclick = async () => {
   const titulo = $('jg-tit').value.trim();
   if (!titulo) { say('jg-msg', 'Escribe el título del juego.', true); return; }
@@ -130,7 +131,7 @@ $('jg-pub').onclick = async () => {
   $('jg-pub').disabled = true; say('jg-msg', 'Publicando…');
   const { error } = await sb.from('juegos').insert({
     titulo, tipo: $('jg-tipo').value, dificultad: $('jg-dif').value, premio: $('jg-pre').value.trim() || null,
-    ganadores: Number($('jg-gan').value), intentos: Number($('jg-int').value), min_pedidos: Math.max(0, Math.min(50, Number($('jg-min').value) || 0)),
+    ganadores: Number($('jg-gan').value), intentos: Number($('jg-int').value), pares: $('jg-tipo').value === 'memoria' ? Number($('jg-pares').value) : 6, min_pedidos: Math.max(0, Math.min(50, Number($('jg-min').value) || 0)),
     encuesta_id: $('jg-enc').value ? Number($('jg-enc').value) : null, sucursal_id: $('jg-loc').value ? Number($('jg-loc').value) : null,
     inicia: $('jg-ini').value || null, termina: $('jg-fin').value || null
   });
@@ -145,7 +146,7 @@ function renderJuegosAd() {
     const [txt, cls] = estadoCamp(j), its = intentosAd.filter(i => i.juego_id === j.id && i.terminado);
     const resp = j.encuesta_id ? respuestasAd.filter(r => r.encuesta_id === j.encuesta_id).length : null;
     return `<div class="line" style="align-items:flex-start"><div style="flex:1;min-width:0"><b>${TIPOS_J[j.tipo][0]} ${esc(j.titulo)}</b> <span class="badge ${cls}">${txt}</span>
-      <div class="mu">${esc(TIPOS_J[j.tipo][1])} · ${DIF_J[j.dificultad]} · ${j.ganadores} ganador(es) · ${j.intentos} intento(s) · ${esc(nomLocalAd(j.sucursal_id))}${j.min_pedidos ? ` · pide ${j.min_pedidos} pedido(s)` : ''}</div>
+      <div class="mu">${esc(TIPOS_J[j.tipo][1])}${j.tipo === 'memoria' ? ' (' + (j.pares || 6) + ' parejas)' : ''} · ${DIF_J[j.dificultad]} · ${j.ganadores} ganador(es) · ${j.intentos} intento(s) · ${esc(nomLocalAd(j.sucursal_id))}${j.min_pedidos ? ` · pide ${j.min_pedidos} pedido(s)` : ''}</div>
       <div>👥 <b>${unicos(its, () => true)}</b> jugaron · 🏆 <b>${unicos(its, i => i.gano)}</b> ganaron${resp !== null ? ` · 📝 <b>${resp}</b> respondieron la encuesta` : ''}</div>
       ${j.premio ? `<div class="mu">Premio: ${esc(j.premio)}</div>` : ''}
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">

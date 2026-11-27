@@ -322,6 +322,18 @@ input[type=color]{height:44px;padding:4px}
   </div>
 
   <div class="card">
+    <h2>Botones a otras sucursales 🏬</h2>
+    <div class="mu">Agrega, en cualquier sucursal, un botón que lleve a la tienda de otra. Sirve cuando cada sucursal vende productos distintos: el cliente toca el botón y ve el catálogo de esa otra sucursal.</div>
+    <label>El botón aparece en la tienda de</label><select id="sl-origen"></select>
+    <label>y lleva a la tienda de</label><select id="sl-dest"></select>
+    <label>Texto del botón (opcional)</label><input id="sl-etq" maxlength="40" placeholder="Ej: Ver el menú de comidas">
+    <label class="opt" style="display:flex;gap:10px;align-items:center;margin-top:8px"><input type="checkbox" id="sl-rec" checked style="width:auto"> También agregar el botón de regreso</label>
+    <button class="btn go" id="sl-add" style="width:100%">Agregar botón</button>
+    <div class="msg" id="sl-msg"></div>
+    <div id="sl-list" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
     <h2>¿De qué inventario sale la venta en línea?</h2>
     <div class="mu">Cada local tiene su propio enlace y QR: lo que el cliente compra por ese enlace descuenta del inventario de ese local. El enlace general usa el local que elijas aquí.</div>
     <label>Local por defecto de la tienda en línea</label><select id="lvs"></select>
@@ -390,6 +402,12 @@ input[type=color]{height:44px;padding:4px}
     <input id="cbq" placeholder="Buscar por nombre o número…">
     <div id="cbd" style="margin-top:8px"></div>
     <div id="clist" style="margin-top:6px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Evaluación de clientes 📊</h2>
+    <div class="mu">Todo lo que cada cliente ha pedido, cómo paga y su calificación de 0 a 100. Para ver el historial completo de uno, ábrelo en la lista y toca “Historial y evaluación”.</div>
+    <button class="btn go" id="rp-abrir" style="width:100%;margin-top:8px">📊 Reporte de todos los clientes</button>
   </div>
 
   <div class="card">
@@ -491,6 +509,8 @@ input[type=color]{height:44px;padding:4px}
       <div><label>Juego</label><select id="jg-tipo"><option value="vasos">🥤 ¿Dónde está la mascota? (vasos)</option><option value="memoria">🃏 Memoria (parejas)</option><option value="atrapa">🐾 Atrapa a la mascota</option></select></div>
       <div><label>Dificultad</label><select id="jg-dif"><option value="facil">Fácil</option><option value="normal" selected>Normal</option><option value="dificil">Difícil</option></select></div>
     </div>
+    <div id="jg-paresw" class="hide"><label>Cartas del juego de memoria</label>
+      <select id="jg-pares"><option value="6">6 parejas (12 cartas)</option><option value="8">8 parejas (16 cartas)</option><option value="10">10 parejas (20 cartas)</option><option value="12">12 parejas (24 cartas)</option></select></div>
     <label>Premio</label><input id="jg-pre" maxlength="80" placeholder="Ej: Combo de 6 sodas">
     <div class="row">
       <div><label>Ganadores en la ruleta</label><select id="jg-gan"><option value="1">1 persona</option><option value="2">2 personas</option><option value="3">3 personas</option></select></div>
@@ -628,6 +648,17 @@ input[type=color]{height:44px;padding:4px}
     <button class="btn go" id="fadd">Agregar frase</button>
     <div class="msg" id="fmsg"></div>
     <div id="flist"></div>
+  </div>
+
+  <div class="card">
+    <h2>Métodos de pago de la tienda 🏦</h2>
+    <div class="mu">Los que ve el cliente al pagar y en su perfil: Yappy, transferencia, efectivo… Cada uno con sus instrucciones y, si quieres, su código QR.</div>
+    <label>Nombre</label><input id="mp-nom" maxlength="40" placeholder="Ej: Yappy">
+    <label>Instrucciones (número, cuenta, a nombre de…)</label><textarea id="mp-ins" rows="3" maxlength="400" placeholder="Ej: Yappy al 6000-0000, a nombre de Cristian"></textarea>
+    <label>Código QR o imagen (opcional)</label><input id="mp-img" type="file" accept="image/*">
+    <button class="btn go" id="mp-add" style="width:100%">Agregar método</button>
+    <div class="msg" id="mp-msg"></div>
+    <div id="mp-list" style="margin-top:6px"></div>
   </div>
 
   <div class="card">
@@ -826,5 +857,6 @@ input[type=color]{height:44px;padding:4px}
 <script src="admin9.js"></script>
 <script src="admin10.js"></script>
 <script src="admin11.js"></script>
+<script src="admin12.js"></script>
 </body>
 </html>
